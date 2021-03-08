@@ -2,7 +2,7 @@
 
 namespace Web\MVC;
 
-use Web\Datbase\Database;
+use Web\Database\Database;
 use Web\MVC\Interfaces\ModelInterface;
 
 abstract class Model implements ModelInterface

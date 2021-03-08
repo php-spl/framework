@@ -2,6 +2,8 @@
 
 namespace Web\MVC;
 
+use Web\DI\Container;
+
 class App
 {
     public $path = '';
