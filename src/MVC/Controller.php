@@ -2,16 +2,24 @@
 
 namespace Web\MVC;
 
-use Web\DI\Container;
 use Web\MVC\Interfaces\ControllerInterface;
+use Exception;
 
 abstract class Controller implements ControllerInterface
 {
     protected $app;
 
-    public function __construct(Container $container)
+    public function __construct($container)
     {
         $this->app = $container;
+        
+        if($this->CSRF) {
+            if($this->CSRF->exists()) {
+                if(!$this->CSRF->verify()) {
+                    throw new Exception("CSRF error!");
+                }
+            }
+        }
     }
 
     public function __get($property) 
