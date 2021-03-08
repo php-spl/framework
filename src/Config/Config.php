@@ -31,4 +31,11 @@ class Config
 
         return $data;
     }
+
+    public function __get($property) 
+    {
+        if ($this->get($property)) {
+            return $this->get($property);
+        }
+    }
 }
