@@ -41,6 +41,13 @@ class Container
         return false;
     }
 
+    public function __get($property) 
+    {
+        if ($this->get($property)) {
+            return $this->get($property);
+        }
+    }
+
     /**
     * @param array      $id
     * @param int|string $position
