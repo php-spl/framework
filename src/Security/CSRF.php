@@ -5,6 +5,7 @@ namespace Web\Security;
 class CSRF
 {
     protected $key = '';
+    protected $token = '';
 
     public function __construct($key = '')
     {
@@ -13,7 +14,7 @@ class CSRF
     }
 
     public function __toString() {
-        return "<input type='hidden' name={$this->key} value={$this->getSessionToken()}>\r\n";
+        return "<input type='hidden' name={$this->key} value={$this->token}>\r\n";
     }
     
     /*
@@ -21,11 +22,18 @@ class CSRF
      */
     public function setToken($length = 32)
     {
-        if(!isset($_SESSION[$this->key])) {
-            return $_SESSION[$this->key] = base64_encode(openssl_random_pseudo_bytes($length));
-        }
+        return $this->token = $_SESSION[$this->key] = base64_encode(openssl_random_pseudo_bytes($length));
 
-        return $this->getSessionToken();
+    }
+
+    /*
+     * Get token
+     */
+    public function getToken()
+    {
+        if(isset($this->token)) {
+            return $this->token;
+        }
     }
 
     /*
@@ -67,15 +75,13 @@ class CSRF
     {
         if(isset($_SESSION[$this->key])) {
             unset($_SESSION[$this->key]);
-            return true;
         }
 
         if(isset($_POST[$this->key])) {
-            return $_POST[$this->key];
-            return true;
+            unset($_POST[$this->key]);
         }
 
-        return false;
+        return true;
     }
 
     /*
@@ -99,5 +105,4 @@ class CSRF
         return false;
     }
     
-
 }

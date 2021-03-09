@@ -12,12 +12,14 @@ abstract class Controller implements ControllerInterface
     public function __construct($container)
     {
         $this->app = $container;
-        
+
         if($this->CSRF) {
-            if($this->CSRF->exists()) {
+            if($this->CSRF->requestExists()) {
                 if(!$this->CSRF->verify()) {
                     throw new Exception("CSRF error!");
                 }
+            } else {
+                $this->CSRF->setToken();
             }
         }
     }
