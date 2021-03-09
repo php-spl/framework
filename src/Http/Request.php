@@ -2,6 +2,8 @@
 
 namespace Web\Http;
 
+use Web\Session\Session;
+
 class Request
 {
     public static function exists($type = 'post') {
@@ -32,6 +34,19 @@ class Request
         }
         
         return null;
+    }
+
+    public static function input($key, $string = null)
+    {
+        if (self::exists($key)) {
+            $input = self::get($key);
+            Session::set($key, $input);
+            return $input;
+        } else {
+            Session::delete($key);
+        }
+
+        return false;
     }
 
     public static function getPrevious()
