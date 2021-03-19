@@ -4,11 +4,11 @@ namespace web\MVC\Interfaces;
 
 interface ModelInterface
 {
-    public function create($table);
+    public function create($fields);
 
     public function read($where);
 
-    public function update($table, $where);
+    public function update($fields, $where);
 
     public function delete($where);
 }

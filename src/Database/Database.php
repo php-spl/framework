@@ -3,6 +3,7 @@
 namespace Web\Database;
 
 use PDO;
+use PDOException;
 
 class Database
 {
@@ -25,9 +26,11 @@ class Database
     protected $charset;
     protected $collation;
     protected $prefix;
-
     protected $stmt;
-    protected $table;
+    
+    public $table;
+    public $fields = ['*'];
+    public $where = [];
 
     public $pdo;
     public $query;
@@ -71,6 +74,19 @@ class Database
         return $this;
     }
 
+    public function fields($fields = [])
+    {
+        $this->fields = $fields;
+
+        return $this;
+    }
+
+    public function where($field, $operator, $value)
+    {
+        $this->where = array_push($this->where, [$field, $operator, $value]);
+        return $this;
+    }
+
     public function query($sql, $params = array())
     {
 
@@ -98,8 +114,10 @@ class Database
             }
 
             if ($this->query->execute()) {
+                if($this->query->rowCount() > 0) {
                     $this->results = $this->query->fetchAll(PDO::FETCH_OBJ);
                     $this->count   = $this->query->rowCount();
+                }
             } else {
                 $this->error = true;
             }
@@ -120,6 +138,10 @@ class Database
     {
         $sql   = "{$action} FROM {$this->table}";
         $value = array();
+
+        if(!empty($this->where)) {
+             $where = $this->where;
+        }
 
         if (!empty($where)) {
 
@@ -162,14 +184,6 @@ class Database
         return false;
     }
 
-
-    public function where($field, $operator, $value)
-    {
-        $where = [$field, $operator, $value];
-        $this->get(['*'], $where);
-        return $this;
-    }
-
     public function insert($fields = array())
     {
         $keys   = array_keys($fields);
@@ -195,7 +209,7 @@ class Database
         return false;
     }
 
-    public function update($attribute, $ID, $fields = array())
+    public function update($fields = array(), $where = array())
     {
         $set = '';
         $x   = 1;
@@ -210,7 +224,7 @@ class Database
             $x++;
         }
 
-        $sql = "UPDATE {$this->table} SET {$set} WHERE {$attribute} = {$ID}";
+        $sql = "UPDATE {$this->table} SET {$set} WHERE {$where[0]} {$where[1]} {$where[2]}";
 
         if (!$this->query($sql, $fields)->error())
         {
@@ -219,9 +233,9 @@ class Database
         return false;
     }
 
-    public function select($select = array(), $where = array(), $options = null)
+    public function select($where = array(), $options = null)
     {
-        return $this->action('SELECT ' . implode($select, ', '), $where, $options);
+        return $this->action('SELECT ' . implode($this->fields, ', '), $where, $options);
     }
 
     public function search($attributes = array(), $searchQuery)
@@ -261,9 +275,9 @@ class Database
         return $this->action('DELETE', $where);
     }
 
-    public function exists($field, $operator, $value)
+    public function exists()
     {
-        return $this->where($field, $operator, $value)->count() ? true : false;
+        return $this->count() ? true : false;
     }
 
     public function results()
