@@ -2,6 +2,7 @@
 
 namespace Web\Database;
 
+use PDO;
 use PDOException;
 
 class Connection
