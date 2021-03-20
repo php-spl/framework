@@ -7,302 +7,639 @@ use PDOException;
 
 class QueryBuilder
 {
-    protected $connection = [
-        'host' => '127.0.0.1',
-        'driver' => 'mysql',
-        'dbname' => '',
-        'username' => 'root',
-        'password' => 'mysql',
-        'charset' => 'utf8',
-        'collation' => 'utf8_unicode_ci',
-        'prefix'    => '',
-    ];
+  // actions
+  const ACTION_INSERT = "INSERT";
+  const ACTION_INSERT_REPLACE = "INSERT OR REPLACE";
+  const ACTION_UPDATE = "UPDATE";
+  const ACTION_DELETE = "DELETE";
+  const ACTION_SELECT = "SElECT";
+  
+  protected $pdo;
+  protected $action = "";
+  protected $fields = [];
+  protected $table = "";
 
-    protected $driver;
-    protected $host;
-    protected $dbname;
-    protected $username;
-    protected $password;
-    protected $charset;
-    protected $collation;
-    protected $prefix;
-    protected $stmt;
-    
-    public $table;
-    public $fields = ['*'];
-    public $where = [];
+  protected $inputParams = [];
+  protected $fieldsFromInput = [];
+  protected $inputIsAssoc = true; 
 
-    public $pdo;
-    public $query;
-    public $error = false;
-    public $results;
-    public $first;
-    public $count = 0;
+  protected $join = [];
+  protected $lastJoinId = -1;
+  protected $onClauses = []; 
 
-    public function __construct($connection = array())
-    {
-        if(!empty($connection)) {
-            $this->connection = $connection;
-        }
+  protected $where = [];
+  protected $having = [];
 
-        $this->driver = $this->connection['driver'];
-        $this->host = $this->connection['host'];
-        $this->dbname = $this->connection['dbname'];
-        $this->username = $this->connection['username'];
-        $this->password = $this->connection['password'];
-        $this->charset = $this->connection['charset'];
+  protected $limit = "";
+  protected $offset = "";
+  protected $groupBy = [];
 
-        try {
-            $this->pdo = new PDO(
-                $this->driver . ':host=' . 
-                $this->host . ';dbname=' . 
-                $this->dbname . ';charset=' .
-                $this->charset, 
-                $this->username, 
-                $this->password
-            );
+  public function __construct(Database $pdo = null)
+  {
+      $this->pdo = $pdo;
 
-        } catch (PDOException $error) {
-            die($error->getMessage());
-        }
-    }
+      if(!isset($this->table)) {
+          $this->table = $this->getTableFromChildModel();
+      }
+  }
 
-    public function table($table)
-    {
-        $this->table = $table;
+  /**
+  * @var Database
+  */
+  public function setPdo(Database $pdo)
+  {
+      $this->pdo = $pdo;
+  }
 
-        return $this;
-    }
+  public function getTableFromChildModel()
+  {
+      return strtolower(array_pop(explode('\\', static::class))) . 's';
+  }
 
-    public function fields($fields = [])
-    {
-        $this->fields = $fields;
+  /**
+   * @param string|string[] $fields
+   */
+  public function insert($fields = null, string $actionType = null): self
+  {
+      $this->action = $actionType ?: self::ACTION_INSERT;
 
-        return $this;
-    }
+      if (is_string($fields)) {
+          $this->fields[] = $fields;
+      } elseif (is_array($fields)) {
+          // either an array of string (the fields)
+          // either the input params (assoc array or array of arrays)
+          if (isset($fields[0]) && is_string($fields[0])) {
+              $this->fields = $fields;
+          } else {
+              $this->setInputParams($fields);
+          }
+      }
 
-    public function where($field, $operator, $value)
-    {
-        $this->where = array_push($this->where, [$field, $operator, $value]);
-        return $this;
-    }
+      return $this;
+  }
 
-    public function query($sql, $params = array())
-    {
+  /**
+   * @param string|string[] $fields
+   */
+  public function insertOrReplace($fields = null): self
+  {
+      return $this->insert($fields, self::ACTION_INSERT_REPLACE);
+  }
 
-        $this->error = false;
+  protected function buildInsertQueryString(): string
+  {
+      $fields = empty($this->fields) ? $this->fieldsFromInput : $this->fields;
+      if (empty($fields)) {
+          throw new Exception("No field is set for INSERT action");
+      }
 
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+      // build a single row
+      $fieldsCount = count($fields);
+      $rowParts = str_repeat( "?, ", $fieldsCount);
+      if ($this->inputIsAssoc) {
+          $rowParts = "";
+          foreach ($fields as $field) {
+              $rowParts .= ":$field, ";
+          }
+      }
+      $row = "(" . substr($rowParts, 0, -2) . "), ";
 
-        $prepare = $this->query = $this->pdo->prepare($sql);
+      // build multiple row if needed
+      $rows = $row; // for when inputParams contain only a single row
+      $rowCount = count($this->inputParams) / $fieldsCount;
+      if ($rowCount >= 2) { // multiple rows are inserted
+          $rows = str_repeat($row, $rowCount);
+      }
 
-        if (isset($prepare)) {
+      return "$this->action INTO $this->table (" . implode(", ", $fields) .
+          ") VALUES " . substr($rows, 0, -2);
+  }
 
-            $datatype = 2;
-            $x         = 1;
+  /**
+   * @param string|string[] $fields
+   */
+  public function update($fields = null): self
+  {
+      return $this->insert($fields, self::ACTION_UPDATE);
+  }
 
-            if (count($params)) {
-                foreach ($params as $param) {
+  protected function buildUpdateQueryString(): string
+  {
+      $fields = empty($this->fields) ? $this->fieldsFromInput : $this->fields;
+      if (empty($fields)) {
+          throw new Exception("No field is set for UPDATE action");
+      }
 
-                    if (is_numeric($param)) {
-                        $datatype = 1;
-                    }
+      $query = "UPDATE $this->table SET ";
 
-                    $this->query->bindValue($x, $param, $datatype);
-                    $x++;
-                }
-            }
+      foreach ($fields as $field) {
+          if ($this->inputIsAssoc) {
+              $query .= "$field = :$field, ";
+          } else {
+              $query .= "$field = ?, ";
+          }
+      }
 
-            if ($this->query->execute()) {
-                if($this->query->rowCount() > 0) {
-                    $this->results = $this->query->fetchAll(PDO::FETCH_OBJ);
-                    $this->count   = $this->query->rowCount();
-                }
-            } else {
-                $this->error = true;
-            }
-        }
-        return $this;
-    }
+      $query = substr($query, 0, -2) . " " . $this->buildWhereQueryString();
+      return rtrim($query);
+  }
 
-    /**
-     * Method for dynamically generating SQL queries
-     * 
-     * @param string $action SQL statement
-     * @param string $table Database table
-     * @param array $where Multi-dimensional array for multiple WHERE statements
-     * @param array $options Array with miscellaneous satements like ORDER BY
-     * @return boolean|object
-     */
-    public function action($action, $where = array(), $options = array())
-    {
-        $sql   = "{$action} FROM {$this->table}";
-        $value = array();
+  public function delete(): self
+  {
+      $this->action = self::ACTION_DELETE;
+      return $this;
+  }
 
-        if(!empty($this->where)) {
-             $where = $this->where;
-        }
+  /**
+   * @param string|string[] $fields
+   */
+  public function select($fields = null, string $alias = null): self
+  {
+      $this->action = self::ACTION_SELECT;
 
-        if (!empty($where)) {
+      if (is_string($fields)) {
+          if ($alias !== null) {
+              $fields .= " as $alias";
+          }
+          $this->fields[] = $fields;
+      } elseif (is_array($fields)) {
+          $this->fields = $fields;
+      }
 
-            $sql .= " WHERE ";
+      return $this;
+  }
 
-            $where = [$where];
+  protected function buildSelectQueryString(): string
+  {
+      $fields = $this->fields;
+      if (empty($fields)) {
+          $fields = "*";
+      } else {
+          $fields = implode(", ", $fields);
+      }
 
-            foreach ($where as $clause) {
+      $query = "SELECT $fields FROM $this->table ";
+      $query .= $this->buildJoinQueryString();
+      $query .= $this->buildWhereQueryString();
+      $query .= $this->buildGroupByQueryString();
+      $query .= $this->buildHavingQueryString();
+      $query .= $this->buildOrderByQueryString();
+      $query .= $this->limit;
+      $query .= $this->offset;
 
-                if (count($clause) === 3) {
+      return rtrim($query);
+  }
 
-                    $operators = array('=', '>', '<', ' >=', '<=', '<>');
+  // table
+  public function table(string $tableName): self
+  {
+      $this->table = $tableName; // no trailing space here !
+      return $this;
+  }
+  public function inTable(string $tableName): self
+  {
+      return $this->table($tableName);
+  }
+  public function fromTable(string $tableName): self
+  {
+      return $this->table($tableName);
+  }
 
-                    if (isset($clause)) {
-                        $field     = $clause[0];
-                        $operator  = $clause[1];
-                        $value[]   = $clause[2];
-                        $bindValue = '?';
-                    }
+  // join    
+  // on clauses by join id
+  // unlike where and having
+  // on is an array or conditional arrays
+  protected function buildJoinQueryString(): string
+  {
+      $str = "";
+      foreach ($this->join as $id => $joinTable) {
+          $str .= $joinTable . "ON ";
+          if (! isset($this->onClauses[$id]) || empty($this->onClauses[$id])) {
+              throw new Exception("Join statement without any ON clause: $joinTable");
+          }
+          $str .= $this->buildConditionalQueryString($this->onClauses[$id]) . " ";
+      }
+      return $str;
+  }
 
-                    if (in_array($operator, $operators)) {
-                        $sql .= "{$field} {$operator} {$bindValue}";
-                        $sql .= " AND ";
-                    }
-                }
-            }
-            $sql = rtrim($sql, " AND ");
-        }
+  public function join(string $tableName, string $alias = null, string $joinType = null): self
+  {
+      if ($alias !== null) {
+          $tableName .= " AS $alias";
+      }
 
-        if (!empty($options)) {
-            foreach ($options as $optionKey => $optionValue) {
-                $sql .= " {$optionKey} {$optionValue}";
-            }
-        }
+      if ($joinType === null) {
+          $joinType = "JOIN";
+      } else {
+          $joinType .= " JOIN";
+      }
 
-        if (!$this->query($sql, $value)->error()) {
-            return $this;
-        }
+      $this->join[] = "$joinType $tableName ";
+      $this->lastJoinId++;
+      return $this;
+  }
+  public function leftJoin(string $tableName, string $alias = null): self
+  {
+      return $this->join($tableName, $alias, "LEFT");
+  }
+  public function rightJoin(string $tableName, string $alias = null): self
+  {
+      return $this->join($tableName, $alias, "RIGHT");
+  }
+  public function fullJoin(string $tableName, string $alias = null): self
+  {
+      return $this->join($tableName, $alias, "FULL");
+  }
 
-        return false;
-    }
+  /**
+   * @param string|callable $field
+   */
+  public function on($field, string $sign = null, string $value = null, string $cond = "AND"): self
+  {
+      if (! isset($this->onClauses[$this->lastJoinId])) {
+          $this->onClauses[$this->lastJoinId] = [];
+      }
 
-    public function insert($fields = array())
-    {
-        $keys   = array_keys($fields);
-        $values = '';
-        $x      = 1;
+      return $this->addConditionalClause($this->onClauses[$this->lastJoinId], $field, $sign, $value, $cond);
+  }
+  public function orOn($field, string $sign = null, $value = null): self
+  {
+      return $this->on($field, $sign, $value, "OR");
+  }
 
-        foreach ($fields as $field)
-        {
-            $values .= '?';
-            if ($x < count($fields))
-            {
-                $values .= ', ';
-            }
-            $x++;
-        }
+  // where
+  protected function buildWhereQueryString(): string
+  {
+      $where = $this->buildConditionalQueryString($this->where);
+      if ($where !== "") {
+          $where = "WHERE $where ";
+      }
+      return $where;
+  }
 
-        $sql = "INSERT INTO {$this->table} (`" . implode('`,`', $keys) . "`) VALUES ({$values})";
+  /**
+   * @param string|callable $field
+   */
+  public function where($field, string $sign = null, string $value = null, string $cond = "AND"): self
+  {
+      return $this->addConditionalClause($this->where, $field, $sign, $value, $cond);
+  }
+  public function orWhere($field, string $sign = null, $value = null)
+  {
+      return $this->where($field, $sign, $value, "OR");
+  }
 
-        if (!$this->query($sql, $fields)->error())
-        {
-            return $this->lastId();
-        }
-        return false;
-    }
+  public function whereNull(string $field): self
+  {
+      return $this->where("$field IS NULL");
+  }
+  public function orWhereNull(string $field): self
+  {
+      return $this->orWhere("$field IS NULL");
+  }
+  public function whereNotNull(string $field): self
+  {
+      return $this->where("$field IS NOT NULL");
+  }
+  public function orWhereNotNull(string $field): self
+  {
+      return $this->orWhere("$field IS NOT NULL");
+  }
 
-    public function update($fields = array(), $where = array())
-    {
-        $set = '';
-        $x   = 1;
+  /**
+   *
+   * @param string|int $min
+   * @param string|int $max
+   */
+  public function whereBetween(string $field, $min, $max): self
+  {
+      return $this->where("$field BETWEEN $min AND $max");
+  }
+  public function orWhereBetween(string $field, $min, $max): self
+  {
+      return $this->orWhere("$field BETWEEN $min AND $max");
+  }
+  public function whereNotBetween(string $field, $min, $max): self
+  {
+      return $this->where("$field NOT BETWEEN $min AND $max");
+  }
+  public function orWhereNotBetween(string $field, $min, $max): self
+  {
+      return $this->orWhere("$field NOT BETWEEN $min AND $max");
+  }
 
-        foreach ($fields as $name => $value)
-        {
-            $set .= "{$name} = ?";
-            if ($x < count($fields))
-            {
-                $set .= ', ';
-            }
-            $x++;
-        }
+  public function whereIn(string $field, array $values): self
+  {
+      $values = implode(", ", $values);
+      return $this->where("$field IN ($values)");
+  }
+  public function orWhereIn(string $field, array $values): self
+  {
+      $values = implode(", ", $values);
+      return $this->orWhere("$field IN ($values)");
+  }
+  public function whereNotIn(string $field, array $values): self
+  {
+      $values = implode(", ", $values);
+      return $this->where("$field NOT IN ($values)");
+  }
+  public function orWhereNotIn(string $field, array $values): self
+  {
+      $values = implode(", ", $values);
+      return $this->orWhere("$field NOT IN ($values)");
+  }
 
-        $sql = "UPDATE {$this->table} SET {$set} WHERE {$where[0]} {$where[1]} {$where[2]}";
+  // order by, group by, having
 
-        if (!$this->query($sql, $fields)->error())
-        {
-            return true;
-        }
-        return false;
-    }
+  protected $orderBy = [];
 
-    public function select($where = array(), $options = null)
-    {
-        return $this->action('SELECT ' . implode($this->fields, ', '), $where, $options);
-    }
+  protected function buildOrderByQueryString(): string
+  {
+      if (empty($this->orderBy)) {
+          return "";
+      }
+      return "ORDER BY " . implode(", ", $this->orderBy) . " ";
+  }
 
-    public function search($attributes = array(), $searchQuery)
-    {
+  public function orderBy(string $field, string $direction = "ASC"): self
+  {
+      $direction = strtoupper($direction);
+      $this->orderBy[] = "$field $direction";
+      return $this;
+  }
 
-        if (!empty($searchQuery) && !empty($attributes)) {
+  protected function buildGroupByQueryString(): string
+  {
+      if (empty($this->groupBy)) {
+          return "";
+      }
+      return "GROUP BY " . implode(", ", $this->groupBy) . " ";
+  }
 
-            $query = "";
+  /**
+   * @param string|string[] $fields
+   */
+  public function groupBy($fields): self
+  {
+      if (is_string($fields)) {
+          $this->groupBy[] = $fields;
+      } elseif (is_array($fields)) {
+          $this->groupBy = $fields;
+      }
+      return $this;
+  }
 
-            foreach ($attributes as $term) {
-                foreach ($searchQuery as $search) {
-                    $query .= "{$term} LIKE ? OR ";
-                }
-            }
+  protected function buildHavingQueryString(): string
+  {
+      $having = $this->buildConditionalQueryString($this->having);
+      if ($having === "") {
+          return "";
+      }
+      return "HAVING $having ";
+  }
 
-            $search = trim($query, "OR ");
-            $sql = "SELECT " . implode($attributes, ', ') . " FROM {$this->table} WHERE {$search}";
-            $z = 1;
+  public function having(string $field, $sign = null, $value = null, string $cond = "AND"): self
+  {
+      return $this->addConditionalClause($this->having, $field, $sign, $value, $cond);
+  }
 
-            for ($x = 0; $x < count($attributes); $x++)
-            {
-                for ($y = 0; $y < count($searchQuery); $y++)
-                {
-                    $params[$z++] = $searchQuery[$y];
-                }
-            }
+  public function orHaving(string $field, $sign = null, $value = null): self
+  {
+      return $this->having($field, $sign, $value, "OR");
+  }
 
-            if (!$this->query($sql, $params)->error())
-            {
-                return (object) $this;
-            }
-        }
-    }
+  // limit offset
+  public function limit(int $limit, int $offset = null): self
+  {
+      $this->limit = "LIMIT $limit ";
+      if ($offset !== null) {
+          $this->offset($offset);
+      }
+      return $this;
+  }
 
-    public function delete($where = array())
-    {
-        return $this->action('DELETE', $where);
-    }
+  public function offset(int $offset): self
+  {
+      $this->offset = "OFFSET $offset ";
+      return $this;
+  }
 
-    public function exists()
-    {
-        return $this->count() ? true : false;
-    }
+  // non-query building methods
+  public function prepare(): \PDOStatement
+  {
+      return $this->pdo->prepare($this->toString());
+  }
 
-    public function results()
-    {
-        return $this->results;
-    }
+  /**
+   * @param array|null $inputParams
+   * - an associative array of named parameters
+   * - or an in-order array of parameters, when placeholders are ?
+   * - an array of these two kinds fo array, which is useful to insert or update several rows with the same query
+   *
+   * @return bool|\PDOStatement|string
+   * - `false` when the query is unsuccessful
+   * - `true` when the query is successful and the action is `INSERT OR REPLACE`, `UPDATE` or `DELETE`.
+   * - the last inserted id when the action is `INSERT`.
+   * - the PDOStatement object when the action is `SELECT`.
+   */
+  public function execute(array $inputParams = null)
+  {
+      if ($inputParams !== null) {
+          $this->setInputParams($inputParams);
+      }
 
-    public function first()
-    {
-        $this->first = $this->results();
-        return $this->first[0];
-    }
+      $stmt = $this->pdo->prepare($this->toString());
+      $success = $stmt->execute($this->inputParams);
 
-    public function error()
-    {
-        return $this->error;
-    }
+      if (
+          ! $success ||
+          $this->action === self::ACTION_INSERT_REPLACE ||
+          $this->action === self::ACTION_UPDATE ||
+          $this->action === self::ACTION_DELETE
+      ) {
+          return $success;
+      }
 
-    public function count()
-    {
-        return $this->count;
-    }
+      if ($this->action === self::ACTION_INSERT) {
+          return $this->pdo->lastInsertId();
+      }
 
-    public function lastId()
-    {
-        return $this->pdo->lastInsertId();
-    }
+      return $stmt; // ACTION_SELECT
+  }
+
+  public function isValid()
+  {
+      try {
+          $this->pdo->prepare($this->toString());
+      } catch (PDOException $e) {
+          return false;
+      }
+      return true;
+  }
+
+  public function __toString(): string
+  {
+      return $this->toString();
+  }
+
+  public function toString(): string
+  {
+      if ($this->action === self::ACTION_INSERT || $this->action === self::ACTION_INSERT_REPLACE) {
+          return $this->buildInsertQueryString();
+      }
+      if ($this->action === self::ACTION_SELECT) {
+          return $this->buildSelectQueryString();
+      }
+      if ($this->action === self::ACTION_UPDATE) {
+          return $this->buildUpdateQueryString();
+      }
+      if ($this->action === self::ACTION_DELETE) {
+          $query = "DELETE FROM $this->table " . $this->buildWhereQueryString();
+          return rtrim($query);
+      }
+      return "QueryBuilder::toString() error: no action has been set";
+  }
+
+  // each clause entry is an array
+  /*
+  [
+      "cond" => "AND" // "OR"
+      "expr" => "expression"
+  ]
+  // or
+  [
+      "cond" => "AND" // "OR"
+      "expr" => [
+          [
+              "cond" => "AND"
+              expr => "expression"
+          ],
+          ...
+      ]
+  ]
+  */
+  protected function buildConditionalQueryString(array $clauses): string
+  {
+      if (empty($clauses)) {
+          return "";
+      }
+
+      $str = "";
+      foreach ($clauses as $id => $clause) {
+          if ($id > 0) {
+              $str .= $clause["cond"] . " ";
+          }
+
+          $expr = $clause["expr"];
+          if (is_array($expr)) {
+              $expr = "(" . $this->buildConditionalQueryString($expr) . ")";
+          }
+          $str .= "$expr ";
+      }
+      return rtrim($str);
+  }
+
+  /**
+   * @param string|callable $field
+   */
+  protected function addConditionalClause(array &$clauses, $field, string $sign = null, string $value = null, $cond = "AND"): self
+  {
+      $clause = [
+          "cond" => $cond,
+
+          // either one expression as a string
+          // or an array of clauses
+          "expr" => "",
+      ];
+
+      if (is_callable($field)) {
+          $beforeCount = count($clauses);
+          $field($this);
+          $afterCount = count($clauses);
+          if ($afterCount === $beforeCount) {
+              return $this;
+          }
+          $clause["expr"] = array_splice($clauses, $beforeCount);
+
+      } elseif (is_array($field)) {
+          foreach ($field as $fieldName => $value) {
+              $this->addConditionalClause($clauses, "$fieldName = :$fieldName", null, null, $cond);
+          }
+          $this->setInputParams($field);
+          return $this;
+
+      } elseif ($sign === null && $value === null) {
+          $clause["expr"] = $field;
+
+      } elseif ($sign !== null && $value === null) {
+          $clause["expr"] = "$field = " . $this->escapeValue($sign);
+
+      } elseif ($sign !== null && $value !== null) {
+          $clause["expr"] = "$field $sign " . $this->escapeValue($value);
+      }
+
+      $clauses[] = $clause;
+
+      return $this;
+  }
+
+  protected function escapeValue($value): string
+  {
+      if (
+          $this->pdo === null ||
+          $value === "?" ||
+          (is_string($value) && $value[0] === ":") // suppose named placeholder
+      ) {
+          return $value;
+      }
+
+      $quoted = $this->pdo->quote($value);
+      if ($quoted === false) {
+          return $value;
+      }
+      return $quoted;
+  }
+
+  /**
+   * @param array $inputParams
+   * @see QueryBuilder::execute();
+   * Set to true by default so that it generates named placeholder from fields name when the user has not supplied an inputParams
+   */
+  protected function setInputParams(array $inputParams)
+  {
+      if (empty($inputParams)) {
+          $this->inputIsAssoc = true;
+          $this->inputParams = [];
+          $this->fieldsFromInput = [];
+          return;
+      }
+
+      // get format of input
+      // and flatten it when needed
+      $formattedInput = $inputParams;
+
+      $keys = array_keys($inputParams);
+      $this->inputIsAssoc = is_string($keys[0]);
+
+      if ($this->inputIsAssoc) {
+          // save fields from input when data is assoc array, if we need them later
+          $this->fieldsFromInput = $keys;
+      }
+      elseif (is_array($inputParams[0])) {
+          $keys = array_keys($inputParams[0]);
+          if (is_string($keys[0])) {
+              $this->fieldsFromInput = $keys;
+              // input is assoc but will be flatten in a regular array just after
+              // so don't set inputIsAssoc = true here
+          }
+
+          // flatten input
+          $formattedInput = [];
+          foreach ($inputParams as $params) {
+              $formattedInput = array_merge($formattedInput, array_values($params));
+          }
+      }
+
+      $this->inputParams = $formattedInput;
+  }
 }
