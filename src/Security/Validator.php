@@ -115,6 +115,6 @@ class Validator
 
     protected function unique($field, $value, $check)
     {
-        return !$this->db->table($check)->exists($field, '=', $value);
+        return !$this->db->table($check)->where($field, '=', $value)->exists();
     }
 }

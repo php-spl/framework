@@ -6,8 +6,8 @@ use Web\Database\QueryBuilder;
 
 class Model extends QueryBuilder
 {
-    public function __construct(Database $pdo)
+    public function __construct(Database $db)
     {
-        parent::__construct($pdo);
+        parent::__construct($db);
     } 
 }

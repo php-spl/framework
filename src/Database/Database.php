@@ -14,11 +14,10 @@ class Database
         'username' => 'root',
         'password' => 'mysql',
         'charset' => 'utf8',
-        'collation' => 'utf8_unicode_ci',
-        'prefix'    => '',
+        'collation' => 'utf8_unicode_ci'
     ];
 
-    protected $pdo;
+    public $pdo;
     
     public $driver;
     public $host;
@@ -27,7 +26,6 @@ class Database
     public $password;
     public $charset;
     public $collation;
-    public $prefix;
 
     public function __construct($connection = array())
     {
@@ -55,7 +53,5 @@ class Database
         } catch (PDOException $error) {
             die($error->getMessage());
         }
-
-        return $this->pdo;
     }
 }
