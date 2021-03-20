@@ -3,6 +3,7 @@
 namespace Web\Database;
 
 use PDO;
+use Exception;
 use PDOException;
 
 class QueryBuilder

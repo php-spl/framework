@@ -18,6 +18,8 @@ class Database
         'prefix'    => '',
     ];
 
+    protected $pdo;
+    
     public $driver;
     public $host;
     public $dbname;
