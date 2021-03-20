@@ -2,7 +2,7 @@
 
 namespace Web\MVC;
 
-use Web\DI\Container;
+use Psr\Container\ContainerInterface;
 
 class App
 {
@@ -19,7 +19,7 @@ class App
     protected $params = array();
  
 
-    public function __construct(Container $container) 
+    public function __construct(ContainerInterface $container) 
     {
         $this->container = $container;
 

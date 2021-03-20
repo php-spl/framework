@@ -30,6 +30,13 @@ class DIContainer implements ContainerInterface
         }
     }
 
+    public function __get($service) 
+    {
+        if ($this->get($service)) {
+            return $this->get($service);
+        }
+    }
+
     /**
      * @param mixed $value
      */

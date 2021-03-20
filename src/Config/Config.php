@@ -8,6 +8,13 @@ class Config
 
     protected $default;
 
+    public function __construct($file = null)
+    {
+        if($file) {
+            $this->load($file)
+        }
+    }
+
     public function load($file)
     {
         $this->data = require $file;

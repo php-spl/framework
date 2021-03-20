@@ -13,13 +13,13 @@ abstract class Controller implements ControllerInterface
     {
         $this->app = $container;
 
-        if($this->CSRF) {
-            if($this->CSRF->requestExists()) {
-                if(!$this->CSRF->verify()) {
+        if($this->app->has('csrf')) {
+            if($this->csrf->requestExists()) {
+                if(!$this->csrf->verify()) {
                     throw new Exception("CSRF error!");
                 }
             } else {
-                $this->CSRF->setToken();
+                $this->csrf->setToken();
             }
         }
     }
