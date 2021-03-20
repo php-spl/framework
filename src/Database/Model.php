@@ -2,11 +2,14 @@
 
 namespace Web\Database;
 
-use PDO;
+use Web\Database\Database;
+
+use Exception;
+use PDOException;
 
 class Model
 {
-    public function __construct(\PDO $pdo = null)
+    public function __construct(Database $pdo = null)
     {
         $this->pdo = $pdo;
 
@@ -64,7 +67,7 @@ class Model
     {
         $fields = empty($this->fields) ? $this->fieldsFromInput : $this->fields;
         if (empty($fields)) {
-            throw new \Exception("No field is set for INSERT action");
+            throw new Exception("No field is set for INSERT action");
         }
 
         // build a single row
@@ -101,7 +104,7 @@ class Model
     {
         $fields = empty($this->fields) ? $this->fieldsFromInput : $this->fields;
         if (empty($fields)) {
-            throw new \Exception("No field is set for UPDATE action");
+            throw new Exception("No field is set for UPDATE action");
         }
 
         $query = "UPDATE $this->table SET ";
@@ -196,7 +199,7 @@ class Model
         foreach ($this->join as $id => $joinTable) {
             $str .= $joinTable . "ON ";
             if (! isset($this->onClauses[$id]) || empty($this->onClauses[$id])) {
-                throw new \Exception("Join statement without any ON clause: $joinTable");
+                throw new Exception("Join statement without any ON clause: $joinTable");
             }
             $str .= $this->buildConditionalQueryString($this->onClauses[$id]) . " ";
         }
@@ -465,7 +468,7 @@ class Model
     {
         try {
             $this->pdo->prepare($this->toString());
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             return false;
         }
         return true;
@@ -641,11 +644,11 @@ class Model
     }
 
     /**
-     * @var \PDO
+     * @var Database
      */
     protected $pdo;
 
-    public function setPdo(\PDO $pdo)
+    public function setPdo(Database $pdo)
     {
         $this->pdo = $pdo;
     }
