@@ -2,8 +2,6 @@
 
 namespace Web\Http;
 
-use Web\Session\Session;
-
 class Request
 {
     public static function exists($type = 'post') {
@@ -40,10 +38,10 @@ class Request
     {
         if (self::exists($key)) {
             $input = self::get($key);
-            Session::set($key, $input);
+            $_SESSION[$key] = $input;
             return $input;
         } else {
-            Session::delete($key);
+            unset($_SESSION[$key]);
         }
 
         return false;

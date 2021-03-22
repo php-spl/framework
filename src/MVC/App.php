@@ -10,12 +10,12 @@ class App
 
     protected $container;
 
-    protected $path;
-    protected $queryString;
+    public $path;
+    public $queryString;
+    public $namespace;
+    public $controller;
+    public $action;
 
-    protected $namespace;
-    protected $controller;
-    protected $action;
     protected $params = array();
  
 

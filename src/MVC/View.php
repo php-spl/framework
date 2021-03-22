@@ -26,6 +26,10 @@ class View
 
     public function render($view, $data = [])
     {
+        if($data) {
+            extract($data);
+        }
+
         require_once "{$this->path}/{$view}.php";
     }
 
