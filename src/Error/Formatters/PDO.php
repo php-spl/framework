@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Log\Formatters;
+namespace Web\Error\Formatters;
 
 class PDO
 {

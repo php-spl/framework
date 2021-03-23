@@ -2,14 +2,9 @@
 
 namespace Web\MVC;
 
-use Psr\Container\ContainerInterface;
-
-class App
+class Router
 {
     public $request;
-
-    protected $container;
-
     public $path;
     public $queryString;
     public $namespace;
@@ -18,65 +13,13 @@ class App
 
     protected $params = array();
  
-
-    public function __construct(ContainerInterface $container) 
+    public function __construct() 
     {
-        $this->container = $container;
-
         $this->path = '';
         $this->controller = 'default';
         $this->action = 'index';
         $this->queryString = 'route';
         $this->namespace = 'App\Controllers';
-    }
-
-    /**
-     * Set path to controllers
-     * @param type $path
-     */
-    public function setPath($path)
-    {
-        $this->path = $path;
-    }
-
-    /**
-     * Set default controller
-     *
-     * @param type $name
-     */
-    public function setController($name)
-    {
-        $this->controller = $name;
-    }
-
-    /**
-     * Set default action
-     *
-     * @param type $name
-     */
-    public function setAction($name)
-    {
-        $this->action = $name;
-    }
-
-    /**
-     * Set default query string from $GET
-     *
-     * @param type $name
-     */
-    public function setQueryString($name)
-    {
-        $this->queryString = $name;
-    }
-    
-    /**
-     * Set default namespace for psr-2 autoloading
-     *
-     * @param type $name
-     */
-    public function setNamespace($name)
-    {
-        $this->namespace = $name;
     }
 
     /**
@@ -89,7 +32,7 @@ class App
     public function run()
     {
         // use this class method to parse the $GET[url]
-        $this->request = $this->router($this->queryString);
+        $this->request = $this->request($this->queryString);
 
         if (!empty($this->request)) {
             $this->controller = ucfirst($this->request[0]);
@@ -155,11 +98,11 @@ class App
 
 
     /**
-     * The router method is responsible for getting the $_GET-parameters
+     * The request method is responsible for getting the $_GET-parameters
      * as an array, for sanitizing it for anything we don't want and removing "/"-slashes
      * after the URL-parameter
      */
-    protected function router($queryString) 
+    protected function request($queryString) 
     {
         if (isset($_GET[$queryString])) {
             return explode('/', filter_var(rtrim($_GET[$queryString], '/'), FILTER_SANITIZE_URL));

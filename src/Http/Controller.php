@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\MVC;
+namespace Web\Http;
 
-use Web\MVC\Interfaces\ControllerInterface;
+use Web\Http\Interfaces\ControllerInterface;
 use Exception;
 
 abstract class Controller implements ControllerInterface

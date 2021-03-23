@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Log\Traits;
+namespace Web\Error\Traits;
 
 trait Helper
 {

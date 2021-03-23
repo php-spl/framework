@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\Log\Writers;
+namespace Web\Error\Writers;
 
-use Web\Log\Formatters;
+use Web\Error\Formatters;
 
 class Stream extends Writer
 {

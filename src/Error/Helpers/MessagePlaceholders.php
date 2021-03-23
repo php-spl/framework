@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\Log\Helpers;
+namespace Web\Error\Helpers;
 
-use StdCmp\Log\Traits;
+use Web\Error\Traits;
 
 /**
  * Replace words surrounded by curly braces in the message by values found in the context.

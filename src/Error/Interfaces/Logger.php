@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Log\Interfaces;
+namespace Web\Error\Interfaces;
 
 use Psr\Log\LogLevel;
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\Log\Formatters;
+namespace Web\Error\Formatters;
 
-use StdCmp\Log\Traits;
+use Web\Error\Traits;
 
 class Text
 {

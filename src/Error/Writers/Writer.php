@@ -1,9 +1,9 @@
 <?php
 
-namespace Web\Log\Writers;
+namespace Web\Error\Writers;
 
-use Web\Log\Interfaces;
-use Web\Log\Traits;
+use Web\Error\Interfaces;
+use Web\Error\Traits;
 
 abstract class Writer implements Interfaces\Writer
 {

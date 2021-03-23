@@ -5,7 +5,7 @@ namespace Web\Database;
 use PDO;
 use PDOException;
 
-class Database
+class Connection
 {
     protected $connection = [
         'host' => '127.0.0.1',

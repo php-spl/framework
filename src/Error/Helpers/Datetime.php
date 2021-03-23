@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Log\Helpers;
+namespace Web\Error\Helpers;
 
 /**
  * Replace the record's timestamp by a formatted datetime (as a string)

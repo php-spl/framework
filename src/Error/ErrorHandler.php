@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\Log;
+namespace Web\Error;
 
-class Errors
+class ErrorHandler
 {
     protected $errors = [];
 
