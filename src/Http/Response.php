@@ -4,8 +4,12 @@ namespace Web\Http;
 
 class Response
 {
-    public static function redirect($location = null)
+    public $baseUrl = '';
+
+    public static function redirect($to = null)
     {
+        $location = self::$baseUrl . $to;
+
         if ($location) {
             if (!headers_sent()) {
                 header('Location: ' . $location);

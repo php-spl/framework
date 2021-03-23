@@ -5,21 +5,32 @@ namespace Web\Http;
 class Router
 {
     public $request;
-    public $path;
-    public $queryString;
-    public $namespace;
     public $controller;
     public $action;
-
-    protected $params = array();
+    public $params = array();
+    public $config;
  
-    public function __construct() 
+    public function __construct($config = []) 
     {
-        $this->path = '';
-        $this->controller = 'default';
-        $this->action = 'index';
-        $this->queryString = 'route';
-        $this->namespace = 'App\Controllers';
+        if(empty($config)) {
+            $this->config = [
+                'query_string' => 'route',
+                'base_folder' => getcwd(),
+                'main_controller' => 'home',
+                'main_method' => 'main',
+                'paths' => [
+                    'controllers' => 'app/Http/Controllers',
+                    'middlewares' => 'app/Http/Middlewares'
+                ],
+                'namespaces' => [
+                    'controllers' => 'App\Http\Controllers',
+                    'middlewares' => 'App\Http\Middlewares'
+                ]
+            ];
+        } else {
+            $this->config = $config;
+        }
+
     }
 
     /**
@@ -32,7 +43,10 @@ class Router
     public function run()
     {
         // use this class method to parse the $GET[url]
-        $this->request = $this->request($this->queryString);
+        $this->request = $this->request($this->config['query_string']);
+
+        $this->controller = $this->config['main_controller'];
+        $this->action = $this->config['main_method'];
 
         if (!empty($this->request)) {
             $this->controller = ucfirst($this->request[0]);
@@ -42,7 +56,7 @@ class Router
 
         // checks if a controller by the name from the URL exists
         if (str_replace('', '', $this->request[0]) &&
-            file_exists($this->path . ucfirst($this->controller) . 'Controller.php')) {
+            file_exists($this->config['base_folder'] .  DIRECTORY_SEPARATOR . $this->config['paths']['controllers'] .  DIRECTORY_SEPARATOR . ucfirst($this->controller) . 'Controller.php')) {
 
             // if exists, use this as the controller instead of default
             $this->controller = ucfirst($this->controller) . 'Controller';
@@ -57,9 +71,9 @@ class Router
         }
 
         // initiate the controller class as an new object
-        $controller = "{$this->namespace}\\" . $this->controller;
+        $controller = "{$this->config['namespaces']['controllers']}\\" . $this->controller;
     
-        $this->controller = new $controller($this->container);
+        $this->controller = new $controller();
 
         // checks for if a second url parameter like index.php?url=[0]/[1] is set
         if (!empty($this->request)) {
@@ -92,17 +106,28 @@ class Router
          * 1. call/execute the controller and it's method.
          * 2. If the Router has NOT changed them, use the default controller and method.
          * 2. if there are any params, return these too. Else just return an empty array.
-         */
+         */        
         call_user_func_array(array($this->controller, $this->action), $this->params);
     }
 
+    public function controller($request, $class)
+    {
+        if($this->request === $request) {
+
+        }
+    }
+
+    public function error($response)
+    {
+        return $response;
+    }
 
     /**
      * The request method is responsible for getting the $_GET-parameters
      * as an array, for sanitizing it for anything we don't want and removing "/"-slashes
      * after the URL-parameter
      */
-    protected function request($queryString) 
+    public function request($queryString) 
     {
         if (isset($_GET[$queryString])) {
             return explode('/', filter_var(rtrim($_GET[$queryString], '/'), FILTER_SANITIZE_URL));

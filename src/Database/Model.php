@@ -6,7 +6,7 @@ use Web\Database\QueryBuilder;
 
 class Model extends QueryBuilder
 {
-    public function __construct(Database $db)
+    public function __construct(Connection $db)
     {
         parent::__construct($db);
     } 

@@ -7,29 +7,19 @@ use Exception;
 
 abstract class Controller implements ControllerInterface
 {
-    protected $app;
+    /**
+    * @var array Before Middlewares
+    */
+    public $middlewareBefore = [
+       
+    ];
 
-    public function __construct($container)
-    {
-        $this->app = $container;
-
-        if($this->app->has('csrf')) {
-            if($this->csrf->requestExists()) {
-                if(!$this->csrf->verify()) {
-                    throw new Exception("CSRF error!");
-                }
-            } else {
-                $this->csrf->setToken();
-            }
-        }
-    }
-
-    public function __get($property) 
-    {
-        if ($this->app->get($property)) {
-            return $this->app->get($property);
-        }
-    }
+    /**
+    * @var array After Middlewares
+    */
+    public $middlewareAfter = [
+        
+    ];
 
     public function index()
     {

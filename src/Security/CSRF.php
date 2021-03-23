@@ -1,6 +1,7 @@
 <?php
 
 namespace Web\Security;
+use Exception;
 
 class CSRF
 {
@@ -103,6 +104,18 @@ class CSRF
         }
 
         return false;
+    }
+
+    public function check()
+    {
+        if($this->requestExists()) {
+            if(!$this->verify()) {
+                throw new Exception("CSRF error!");
+            }
+            } else {
+                $this->setToken();
+            }
+        }
     }
     
 }

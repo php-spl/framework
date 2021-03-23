@@ -6,7 +6,7 @@ use PDO;
 use Exception;
 use PDOException;
 
-use Web\Database\Database;
+use Web\Database\Connection;
 
 class QueryBuilder
 {  
@@ -43,7 +43,7 @@ class QueryBuilder
     public $first;
     public $count = 0;
 
-    public function __construct(Database $db)
+    public function __construct(Connection $db)
     {
         $this->setPdo($db->pdo);
 
