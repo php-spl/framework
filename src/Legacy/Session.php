@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Session;
+namespace Web\Legacy;
 
 class Session
 {

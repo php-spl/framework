@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\MVC;
+namespace Web\Http;
 
 class Router
 {

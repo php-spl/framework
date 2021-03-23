@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\DI;
+namespace Web\Legacy;
 
 class Container
 {
