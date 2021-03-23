@@ -11,7 +11,7 @@ class Config
     public function __construct($file = null)
     {
         if($file) {
-            $this->load($file)
+            $this->load($file);
         }
     }
 
