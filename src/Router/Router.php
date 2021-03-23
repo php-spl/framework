@@ -656,7 +656,8 @@ class Router
             '/'
         );
 
-        $file = realpath("{$this->paths['controllers']}/{$controller}.php");
+        $file = realpath("{$this->baseFolder}/{$this->paths['controllers']}/{$controller}.php");
+
         if (!file_exists($file)) {
             return $this->exception("{$controller} class is not found! Please check the file.");
         }
