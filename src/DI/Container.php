@@ -4,7 +4,7 @@ namespace Web\DI;
 
 use Psr\Container\ContainerInterface;
 
-class DIContainer implements ContainerInterface
+class Container implements ContainerInterface
 {
     /**
      * @var array

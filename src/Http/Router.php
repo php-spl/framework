@@ -2,136 +2,166 @@
 
 namespace Web\Http;
 
-class Router
+Class Router 
 {
-    public $request;
-    public $controller;
-    public $action;
-    public $params = array();
-    public $config;
- 
-    public function __construct($config = []) 
-    {
-        if(empty($config)) {
-            $this->config = [
-                'query_string' => 'route',
-                'base_folder' => getcwd(),
-                'main_controller' => 'home',
-                'main_method' => 'main',
-                'paths' => [
-                    'controllers' => 'app/Http/Controllers',
-                    'middlewares' => 'app/Http/Middlewares'
-                ],
-                'namespaces' => [
-                    'controllers' => 'App\Http\Controllers',
-                    'middlewares' => 'App\Http\Middlewares'
-                ]
-            ];
-        } else {
-            $this->config = $config;
-        }
+	private $url = '';
+	private $router = array();
+	private $exception = null;
+	private $parameters = array();
+	private $base = '';
+	private $matched = false;
 
-    }
+	public function __construct(){
+		$this->request();
+	}
 
-    /**
-     * Fetching the controller class and its methods
-     * happens in the contructer doing every run.
-     * Default params are:
-     * array('controller' =>'default','action'=>'index','pathcontrollers' => '', 'rooturi'=> 'url')
-     * $object can be something to pass to the controllers constructer
-     */
-    public function run()
-    {
-        // use this class method to parse the $GET[url]
-        $this->request = $this->request($this->config['query_string']);
+	public function get($path, $exec){
+		array_push($this->router, array('method' => 'GET', 'path' => $path, 'exec' => $this->config($exec)));
+	}
 
-        $this->controller = $this->config['main_controller'];
-        $this->action = $this->config['main_method'];
+	public function post($path, $exec){
+		array_push($this->router, array('method' => 'POST', 'path' => $path, 'exec' => $this->config($exec)));
+	}
 
-        if (!empty($this->request)) {
-            $this->controller = ucfirst($this->request[0]);
-        } else {
-            $this->request = array($this->controller, $this->action);
-        }
+	public function all($path, $exec){
+		array_push($this->router, array('method' => 'GET', 'path' => $path, 'exec' => $this->config($exec)));
+		array_push($this->router, array('method' => 'POST', 'path' => $path, 'exec' => $this->config($exec)));
+	}
 
-        // checks if a controller by the name from the URL exists
-        if (str_replace('', '', $this->request[0]) &&
-            file_exists($this->config['base_folder'] .  DIRECTORY_SEPARATOR . $this->config['paths']['controllers'] .  DIRECTORY_SEPARATOR . ucfirst($this->controller) . 'Controller.php')) {
+	public function error($exec){
+		$this->exception = $this->config($exec);
+	}
 
-            // if exists, use this as the controller instead of default
-            $this->controller = ucfirst($this->controller) . 'Controller';
+	public function setBase($base){
+		$this->base = $base;
 
-            /*
-             * destroys the first URL parameter,
-             *  to leave it like index.php?url=[0]/[1]/[parameters in array seperated by "/"]
-             */
-            unset($this->request[0]);
-        } else {
-            return header("HTTP/1.0 404 Not Found");
-        }
+		if(substr($this->url, 0, strlen($base)) == $base){
+			$this->url = substr($this->url, strlen($base));
+		}else{
+			$this->matched = true; //Jump to exception
+		}
+	}
 
-        // initiate the controller class as an new object
-        $controller = "{$this->config['namespaces']['controllers']}\\" . $this->controller;
-    
-        $this->controller = new $controller();
+	public function url($parameters = false){
+		if(!$parameters){
+			return $this->base.$this->url;
+		}else{
+			return $this->base.$this->url.(($_SERVER['QUERY_STRING'] != null) ? '?'.$_SERVER['QUERY_STRING'] : '');
+		}
+	}
 
-        // checks for if a second url parameter like index.php?url=[0]/[1] is set
-        if (!empty($this->request)) {
+	public function run(){
+		if(!$this->matched){
+			foreach($this->router as $r){
+				if($r['method'] == $_SERVER['REQUEST_METHOD']){
+					if(preg_match_all($this->setPayload($r['path']), $this->url, $matches)){
+						if(count($matches) > 1 && strpos($r['path'], "{")){
+							$this->setUrlParams($r['path'], $matches);
+						}
+						$this->execute($r['exec']);
+						return true;
+					}
+				}
+			}
+		}
+		//Exception
+		$this->execute($this->exception);
+		$this->matched = true;
+	}
 
-            // then check if an according method exists in the controller from $url[0]
-            if (method_exists($this->controller, $this->request[1])) {
+	public function getUrlParams($key){
+		if(isset($this->parameters[$key])){
+			return $this->parameters[$key];
+		}else{
+			return false;
+		}
+	}
 
-                // if exists, use this as the method instead of default
-                $this->action = $this->request[1];
+	private function setPayload($path){
+		if(substr($path, 0, 4) == "/^\/" && substr($path, -1, 1) == "/"){ // regex
+			return $path;
+		}
 
-                /*
-                 * destroys the second URL, to leave only the parameters
-                 *  left like like index.php?url=[parameters in array seperated by "/"]
-                 */
-                unset($this->request[1]);
+		$strreplace = array(
+			"\*" => "[\w]*",
+			'/'=> '\/'
+		);
+		$pregreplace = array(
+			"/(\([\w]+\))/" => "$1{0,1}",
+			"/{[\w]+}/" => "(.*?)"
+		);
+		foreach ($strreplace as $key => $value) {
+			$path = str_replace($key, $value, $path);
+		}
+		foreach ($pregreplace as $key => $value) {
+			$path = preg_replace($key, $value, $path);
+		}
+		return '/^'.$path.'$/';
 
-            } else {
-                return header("HTTP/1.0 404 Not Found");
-            }
-        }
+	}
 
-        /**
-         * checks if the $GET['url'] has any parameters left in the
-         * index.php?url=[parameters in array seperated by "/"].
-         * If it has, get all the values. Else, just parse is as an empty array.
-         */
-        $this->params = $this->request ? array_values($this->request) : array();
+	private function config($exec){
+		if(is_callable($exec)){
+			$temp = $exec;
+			$exec = array('func' => $temp, 'type' => 'closure');
+		}elseif(is_string($exec)){
+			$temp = $exec;
+			$exec = array('func' => $temp, 'type' => 'string');
+		}elseif(is_string($exec['func']) && strpos($exec['func'], '::')){ //Static method
+			if(!method_exists(explode('::', $exec['func'])[0], explode('::', $exec['func'])[1])){
+				trigger_error('The method specified does not exist', E_USER_ERROR);
+			}
+			$exec['type'] = 'static';
+		}elseif(is_array($exec['func']) && count($exec['func']) == 2){ //Class method
+			if(!is_object($exec['func'][0])){
+				trigger_error('The first parameter of "func" should be an object', E_USER_ERROR);
+			}
+			if(!method_exists($exec['func'][0], $exec['func'][1])){
+				trigger_error('The method specified does not exist', E_USER_ERROR);
+			}
+			$exec['type'] = 'class';
+		}elseif(is_string($exec['func'])){ //Function
+			if(!function_exists($exec['func'])){
+				trigger_error('The function specified does not exist', E_USER_ERROR);
+			}
+			$exec['type'] = 'function';
+		}else{
+			trigger_error('The router cannot recognize the function name', E_USER_ERROR);
+		}
 
-        /**
-         * 1. call/execute the controller and it's method.
-         * 2. If the Router has NOT changed them, use the default controller and method.
-         * 2. if there are any params, return these too. Else just return an empty array.
-         */        
-        call_user_func_array(array($this->controller, $this->action), $this->params);
-    }
+		$exec['parameters'] = isset($exec['parameters']) ? (array)$exec['parameters']  : array();
 
-    public function controller($request, $class)
-    {
-        if($this->request === $request) {
+		return $exec;
+	}
 
-        }
-    }
+	private function execute($exec){
+		if($exec['type'] == 'closure' && empty($exec['parameters'])){
+			$exec['parameters'] = $this->parameters;
+		}
+		call_user_func_array($exec['func'], $exec['parameters']);
+	}
 
-    public function error($response)
-    {
-        return $response;
-    }
+	private function request(){
+		$url = '';
 
-    /**
-     * The request method is responsible for getting the $_GET-parameters
-     * as an array, for sanitizing it for anything we don't want and removing "/"-slashes
-     * after the URL-parameter
-     */
-    public function request($queryString) 
-    {
-        if (isset($_GET[$queryString])) {
-            return explode('/', filter_var(rtrim($_GET[$queryString], '/'), FILTER_SANITIZE_URL));
-        }
-    }
+		if(isset($_SERVER['PATH_INFO'])){
+			$url = $_SERVER['PATH_INFO'];
+		}else{
+			$url = '/' . str_replace($_SERVER['SCRIPT_NAME'], '', $_SERVER['PHP_SELF']);
+		}
 
+		if($url != '/') {
+			$url = rtrim($url, '/');
+		}
+
+		$this->url = $url;
+	}
+
+	private function setUrlParams($pattern, $matches){
+		preg_match_all("/{(.*?)}/", $pattern, $para);
+		for ($i=0; $i < count($para[1]); $i++) {
+			$array[] =  $matches[$i+1][0];
+			$this->parameters[$para[1][$i]] = $matches[$i+1][0];
+		}
+	}
 }

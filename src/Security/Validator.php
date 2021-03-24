@@ -2,8 +2,8 @@
 
 namespace Web\Security;
 
-use Web\Database\Database;
-use Web\Log\Errors;
+use Web\Database\Connection;
+use Web\Error\ErrorHandler;
 
 class Validator
 {
@@ -33,7 +33,7 @@ class Validator
         'unique' => 'That :field is already taken'
     ];
 
-    public function __construct(Database $db, Errors $errors)
+    public function __construct(Connection $db, ErrorHandler $errors)
     {
         $this->db = $db;
         $this->errors = $errors;
