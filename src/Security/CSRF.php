@@ -11,10 +11,9 @@ class CSRF
     public function __construct($key = '')
     {
         $this->key = $key;
-
     }
 
-    public function __toString() {
+    public function input() {
         return "<input type='hidden' name={$this->key} value={$this->token}>\r\n";
     }
     
@@ -23,8 +22,9 @@ class CSRF
      */
     public function setToken($length = 32)
     {
-        return $this->token = $_SESSION[$this->key] = base64_encode(openssl_random_pseudo_bytes($length));
-
+        $this->token = base64_encode(openssl_random_pseudo_bytes($length));
+        $_SESSION[$this->key] = $this->token;
+        return $this->token;
     }
 
     /*
@@ -96,26 +96,30 @@ class CSRF
     /*
      * Checks if token session is set. Usefull for validating forms for CRSF
      */
-    public function verify()
+    public function tokenVerify()
     {
-        if ($this->getRequestToken() === $this->getSessionToken()) {
-            unset($_SESSION[$this->key]);
-            return true;
+        if($this->requestExists()) {
+
+            if ($this->getRequestToken() != $this->getSessionToken()) {
+                return false;
+            } else {
+                return true;
+            }
         }
 
-        return false;
+        return true;
+
     }
 
     public function check()
     {
-        if($this->requestExists()) {
-            if(!$this->verify()) {
-                throw new Exception("CSRF error!");
-            }
-            } else {
-                $this->setToken();
-            }
+        if($this->tokenVerify()) {
+            unset($_SESSION[$this->key]);
+            return true;
+        } else {
+            throw new Exception("CSRF error!");
         }
+        
     }
     
 }
