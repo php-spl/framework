@@ -209,10 +209,12 @@ class QueryBuilder
         $this->table = $this->prefix . $tableName; // no trailing space here !
         return $this;
     }
+
     public function inTable(string $tableName): self
     {
         return $this->table($tableName);
     }
+
     public function fromTable(string $tableName): self
     {
         return $this->table($tableName);
@@ -251,14 +253,22 @@ class QueryBuilder
         $this->lastJoinId++;
         return $this;
     }
+
     public function leftJoin(string $tableName, string $alias = null): self
     {
         return $this->join($tableName, $alias, "LEFT");
     }
+
     public function rightJoin(string $tableName, string $alias = null): self
     {
         return $this->join($tableName, $alias, "RIGHT");
     }
+
+    public function innerJoin(string $tableName, string $alias = null): self
+    {
+        return $this->join($tableName, $alias, "INNER");
+    }
+
     public function fullJoin(string $tableName, string $alias = null): self
     {
         return $this->join($tableName, $alias, "FULL");
@@ -275,6 +285,7 @@ class QueryBuilder
 
         return $this->addConditionalClause($this->onClauses[$this->lastJoinId], $field, $sign, $value, $cond);
     }
+    
     public function orOn($field, string $sign = null, $value = null): self
     {
         return $this->on($field, $sign, $value, "OR");
