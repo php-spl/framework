@@ -166,7 +166,7 @@ class QueryBuilder
     {
         $this->action = self::ACTION_SELECT;
 
-        if(isset($this->fields)) {
+        if(!empty($this->fields)) {
             $fields = $this->fields;
         }
 
