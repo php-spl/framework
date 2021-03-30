@@ -5,13 +5,8 @@ use Exception;
 
 class CSRF
 {
-    protected $key = '';
+    public $key = '_csrf';
     protected $token = '';
-
-    public function __construct($key = '')
-    {
-        $this->key = $key;
-    }
 
     public function input() {
         return "<input type='hidden' name={$this->key} value={$this->token}>\r\n";

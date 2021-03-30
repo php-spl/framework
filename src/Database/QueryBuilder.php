@@ -15,7 +15,7 @@ class QueryBuilder
     const ACTION_INSERT_REPLACE = "INSERT OR REPLACE";
     const ACTION_UPDATE = "UPDATE";
     const ACTION_DELETE = "DELETE";
-    const ACTION_SELECT = "SElECT";
+    const ACTION_SELECT = "SElECT COUNT(*)";
 
     protected $action = "";
     protected $fields = [];
@@ -478,9 +478,9 @@ class QueryBuilder
         $success = $stmt->execute($this->inputParams);
 
         if ($success) {
-            if($stmt->rowCount() > 0) {
+            if($stmt->fetchColumn() > 0) {
                 $this->results = $stmt->fetchAll($this->fetch);
-                $this->count   = $stmt->rowCount();
+                $this->count   = $stmt->fetchColumn();
                 $this->first   = $this->results[0];
             }
         } else {
@@ -689,6 +689,11 @@ class QueryBuilder
     public function results()
     {
         return $this->results;
+    }
+
+    public function save($options = null)
+    {
+        return $this->execute($options);
     }
 
     public function get($options = null)
