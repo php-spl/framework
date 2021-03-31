@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\Http;
+namespace Web\Legacy;
 
-class Http
+class Router
 {
     public $request;
     public $controller;

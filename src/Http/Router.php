@@ -5,7 +5,7 @@ namespace Web\Http;
 Class Router 
 {
 	private $url = '';
-	private $router = array();
+	public $router = array();
 	private $exception = null;
 	private $parameters = array();
 	private $base = '';

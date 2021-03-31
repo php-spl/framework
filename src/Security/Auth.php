@@ -18,7 +18,9 @@ class Auth {
 
     public function user() 
     {
-        return $this->user->where($this->user_id, $_SESSION[$this->session])->first();
+        if($this->check()) { 
+            return $this->user->where($this->user_id, $_SESSION[$this->session])->first();
+        }
     }
 
     public function check() 
@@ -53,7 +55,9 @@ class Auth {
 
     public function logout() 
     {
-        unset($_SESSION[$this->session]);
+        if($this->check()) {
+            unset($_SESSION[$this->session]);
+        }
     }
 
 }

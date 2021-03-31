@@ -18,6 +18,7 @@ class QueryBuilder
     const ACTION_SELECT = "SElECT COUNT(*)";
 
     protected $action = "";
+    protected $fillable = [];
     protected $fields = [];
     protected $prefix = null;
     protected $table = null;
@@ -35,6 +36,7 @@ class QueryBuilder
 
     protected $limit = "";
     protected $offset = "";
+    protected $orderBy = [];
     protected $groupBy = [];
 
     public $fetch = PDO::FETCH_OBJ;
@@ -48,7 +50,7 @@ class QueryBuilder
         $this->setPdo($db->pdo);
 
         if(!isset($this->table)) {
-            $this->table = $this->getTableFromChildModel();
+            $this->table = $this->getTableFromChildModelPlural();
         }
     }
 
@@ -60,7 +62,7 @@ class QueryBuilder
         $this->pdo = $pdo;
     }
 
-    public function getTableFromChildModel()
+    public function getTableFromChildModelPlural()
     {
         return strtolower(array_pop(explode('\\', static::class))) . 's';
     }
@@ -166,8 +168,8 @@ class QueryBuilder
     {
         $this->action = self::ACTION_SELECT;
 
-        if(!empty($this->fields)) {
-            $fields = $this->fields;
+        if(!empty($this->fillable)) {
+            $fields = $this->fillable;
         }
 
         if (is_string($fields)) {
@@ -375,8 +377,6 @@ class QueryBuilder
 
     // order by, group by, having
 
-    protected $orderBy = [];
-
     protected function buildOrderByQueryString(): string
     {
         if (empty($this->orderBy)) {
@@ -478,9 +478,9 @@ class QueryBuilder
         $success = $stmt->execute($this->inputParams);
 
         if ($success) {
-            if($stmt->fetchColumn() > 0) {
+            if($stmt->rowCount() > 0) {
+                $this->count   = $stmt->rowCount();
                 $this->results = $stmt->fetchAll($this->fetch);
-                $this->count   = $stmt->fetchColumn();
                 $this->first   = $this->results[0];
             }
         } else {
@@ -705,6 +705,7 @@ class QueryBuilder
 
     public function first($options = null)
     {
+        $this->action = self::ACTION_SELECT;
         $this->execute($options);
         return $this->first;
     }
@@ -714,8 +715,10 @@ class QueryBuilder
         return $this->error;
     }
 
-    public function count()
-    {
+    public function count($options = null)
+    {   
+        $this->action = self::ACTION_SELECT;
+        $this->execute($options);
         return $this->count;
     }
 
