@@ -2,166 +2,556 @@
 
 namespace Web\Http;
 
-Class Router 
+class Router
 {
-	private $url = '';
-	public $router = array();
-	private $exception = null;
-	private $parameters = array();
-	private $base = '';
-	private $matched = false;
+    /**
+     * @var self $instance
+     */
+    private static $instance = null;
 
-	public function __construct(){
-		$this->request();
-	}
+    /**
+     * @var null $URL
+     */
+    public static $URL = null;
 
-	public function get($path, $exec){
-		array_push($this->router, array('method' => 'GET', 'path' => $path, 'exec' => $this->config($exec)));
-	}
+    /**
+     * @var null $REQUEST
+     */
+    public static $REQUEST = null;
 
-	public function post($path, $exec){
-		array_push($this->router, array('method' => 'POST', 'path' => $path, 'exec' => $this->config($exec)));
-	}
+    /**
+     * @var array $params
+     */
+    public static $params = [];
 
-	public function all($path, $exec){
-		array_push($this->router, array('method' => 'GET', 'path' => $path, 'exec' => $this->config($exec)));
-		array_push($this->router, array('method' => 'POST', 'path' => $path, 'exec' => $this->config($exec)));
-	}
+    /**
+     * @var array $queryParams
+     */
+    private static $queryParams = [];
 
-	public function error($exec){
-		$this->exception = $this->config($exec);
-	}
+    /**
+     * This static property holds all routes
+     *
+     * @var array $routes
+     */
+    private static $routes = [];
 
-	public function setBase($base){
-		$this->base = $base;
+    /**
+     * Return current route
+     *
+     * @var string
+     */
+    public static $route = "";
 
-		if(substr($this->url, 0, strlen($base)) == $base){
-			$this->url = substr($this->url, strlen($base));
-		}else{
-			$this->matched = true; //Jump to exception
-		}
-	}
+    /**
+     * Last route added
+     *
+     * @var string
+     */
+    private static $last = null;
 
-	public function url($parameters = false){
-		if(!$parameters){
-			return $this->base.$this->url;
-		}else{
-			return $this->base.$this->url.(($_SERVER['QUERY_STRING'] != null) ? '?'.$_SERVER['QUERY_STRING'] : '');
-		}
-	}
+    /**
+     * @var string
+     */
+    private static $prefix = null;
 
-	public function run(){
-		if(!$this->matched){
-			foreach($this->router as $r){
-				if($r['method'] == $_SERVER['REQUEST_METHOD']){
-					if(preg_match_all($this->setPayload($r['path']), $this->url, $matches)){
-						if(count($matches) > 1 && strpos($r['path'], "{")){
-							$this->setUrlParams($r['path'], $matches);
-						}
-						$this->execute($r['exec']);
-						return true;
-					}
-				}
-			}
-		}
-		//Exception
-		$this->execute($this->exception);
-		$this->matched = true;
-	}
+    /**
+     * @var string
+     */
+    private static $name = null;
 
-	public function getUrlParams($key){
-		if(isset($this->parameters[$key])){
-			return $this->parameters[$key];
-		}else{
-			return false;
-		}
-	}
+    /**
+     * @var array $doNotIncludeInParams
+     */
+    private static $doNotIncludeInParams = [];
 
-	private function setPayload($path){
-		if(substr($path, 0, 4) == "/^\/" && substr($path, -1, 1) == "/"){ // regex
-			return $path;
-		}
+    /**
+     * @var array
+     */
+    private static $shortcuts = [
+        'i' => '(\d+)',
+        's' => '(\w+)',
+        'locale' => '(sk|en)->sk'
+    ];
 
-		$strreplace = array(
-			"\*" => "[\w]*",
-			'/'=> '\/'
-		);
-		$pregreplace = array(
-			"/(\([\w]+\))/" => "$1{0,1}",
-			"/{[\w]+}/" => "(.*?)"
-		);
-		foreach ($strreplace as $key => $value) {
-			$path = str_replace($key, $value, $path);
-		}
-		foreach ($pregreplace as $key => $value) {
-			$path = preg_replace($key, $value, $path);
-		}
-		return '/^'.$path.'$/';
+    /**
+     * Init new self instance
+     */
+    public static function init() {
+        self::$instance = new self();
+    }
 
-	}
+    /**
+     * Asign name to route
+     *
+     * @param $name
+     */
+    public function name($name)
+    {
+        $route = self::$routes[self::$last];
+        unset(self::$routes[self::$last]);
+        self::$routes[self::$name . $name] = $route;
+    }
 
-	private function config($exec){
-		if(is_callable($exec)){
-			$temp = $exec;
-			$exec = array('func' => $temp, 'type' => 'closure');
-		}elseif(is_string($exec)){
-			$temp = $exec;
-			$exec = array('func' => $temp, 'type' => 'string');
-		}elseif(is_string($exec['func']) && strpos($exec['func'], '::')){ //Static method
-			if(!method_exists(explode('::', $exec['func'])[0], explode('::', $exec['func'])[1])){
-				trigger_error('The method specified does not exist', E_USER_ERROR);
-			}
-			$exec['type'] = 'static';
-		}elseif(is_array($exec['func']) && count($exec['func']) == 2){ //Class method
-			if(!is_object($exec['func'][0])){
-				trigger_error('The first parameter of "func" should be an object', E_USER_ERROR);
-			}
-			if(!method_exists($exec['func'][0], $exec['func'][1])){
-				trigger_error('The method specified does not exist', E_USER_ERROR);
-			}
-			$exec['type'] = 'class';
-		}elseif(is_string($exec['func'])){ //Function
-			if(!function_exists($exec['func'])){
-				trigger_error('The function specified does not exist', E_USER_ERROR);
-			}
-			$exec['type'] = 'function';
-		}else{
-			trigger_error('The router cannot recognize the function name', E_USER_ERROR);
-		}
+    /**
+     * Add custom shortcut
+     * shortcut with default value -> $regex = (val1|val2)->val1;
+     *
+     * @param $shortcut
+     * @param $regex
+     */
+    public static function addShortcut($shortcut, $regex)
+    {
+        self::$shortcuts[$shortcut] = $regex;
+    }
 
-		$exec['parameters'] = isset($exec['parameters']) ? (array)$exec['parameters']  : array();
+    /**
+     * Get link from route name and params
+     *
+     * @param $route
+     * @param array $params
+     * @param $absolute
+     * @return null
+     */
+    public static function link($route, $params = [], $absolute = true)
+    {
+        if (!isset(self::$routes[$route])) return null;
+        $route = self::$routes[$route];
 
-		return $exec;
-	}
+        $link = "";
+        foreach ($route['params'] as $key => $param) {
+            if (isset($param['real'])) {
+                $link .= $param['pattern'] . '/';
+            } else if (isset($params[$param['name']])) {
+                // Chcek if param has default
+                if (isset($param['default']) && $param['default'] !== $params[$param['name']]) {
+                    $link .= $params[$param['name']] . '/';
+                }
+            }
+        }
 
-	private function execute($exec){
-		if($exec['type'] == 'closure' && empty($exec['parameters'])){
-			$exec['parameters'] = $this->parameters;
-		}
-		call_user_func_array($exec['func'], $exec['parameters']);
-	}
+        // Add absolute path
+        if ($absolute) {
+            $link = self::$URL . $link;
+        }
 
-	private function request(){
-		$url = '';
+        // Cut slash at the end
+        return rtrim($link, '/');
+    }
 
-		if(isset($_SERVER['PATH_INFO'])){
-			$url = $_SERVER['PATH_INFO'];
-		}else{
-			$url = '/' . str_replace($_SERVER['SCRIPT_NAME'], '', $_SERVER['PHP_SELF']);
-		}
+    /**
+     * Redirict to specific route or defined location
+     *
+     * @param $route
+     * @param array $params
+     */
+    public static function redirect($route, $params = [])
+    {
+        if (isset(self::$routes[$route])) {
+            $route = self::link($route, $params);
+        }
+        header('Location: ' . $route, true);
+        die();
+    }
 
-		if($url != '/') {
-			$url = rtrim($url, '/');
-		}
+    /**
+     * Create prefixed routes
+     *
+     * @param $prefix
+     * @param $callback
+     * @param string $name
+     * @param array $doNotIncludeInParams
+     */
+    public static function prefix($prefix, $callback, $name = '', $doNotIncludeInParams = [])
+    {
+        self::$prefix = $prefix;
+        self::$name = $name;
+        self::$doNotIncludeInParams = $doNotIncludeInParams;
+        call_user_func($callback);
+        self::$prefix = null;
+        self::$name = null;
+        self::$doNotIncludeInParams = [];
+    }
 
-		$this->url = $url;
-	}
+    /**
+     * Create route
+     *
+     * @param $route
+     * @param $action
+     * @param array $method
+     * @return Router
+     */
+    public static function route($route, $action, $method = ["POST", "GET"])
+    {
+        $prefix = self::$prefix;
+        if (empty($route) && !empty(self::$prefix)) {
+            $prefix = rtrim(self::$prefix, '/');
+        }
 
-	private function setUrlParams($pattern, $matches){
-		preg_match_all("/{(.*?)}/", $pattern, $para);
-		for ($i=0; $i < count($para[1]); $i++) {
-			$array[] =  $matches[$i+1][0];
-			$this->parameters[$para[1][$i]] = $matches[$i+1][0];
-		}
-	}
+
+        $explodedRoute = explode("/", $prefix . $route);
+        $params = [];
+        $pattern = "";
+
+        // create route
+        foreach ($explodedRoute as $key => $r) {
+            if (strpos($r, '}?') !== false) {
+                $r = self::dynamic($r, $params, true);
+                $pattern = substr($pattern, 0, -1);
+                $dyn = true;
+            } else if (strpos($r, '}') !== false) {
+                $r = self::dynamic($r, $params, false);
+                $pattern = substr($pattern, 0, -1);
+                $dyn = true;
+            } else {
+                $params[] = [
+                    'pattern' => $r,
+                    'real' => false
+                ];
+            }
+            $pattern .= ($key == 0 && !isset($dyn) ? '/' : '') . $r . '/';
+        }
+
+        // Create pattern
+        $pattern = substr($pattern, 0, -1) . '/?';
+        $pattern = '~^' . str_replace('/', '\/', $pattern) . '$~';
+
+        // Save data to static property
+        $name = uniqid();
+        self::$routes[$name] = [
+            'route' => $route,
+            'pattern' => $pattern,
+            'params' => $params,
+            'action' => $action,
+            'method' => $method,
+            'doNotIncludeInParams' => self::$doNotIncludeInParams
+        ];
+        // Set last added
+        self::$last = $name;
+
+        // return self instance
+        if (self::$instance == null) {
+            self::init();
+        }
+        return self::$instance;
+    }
+
+    /**
+     * Helper for route with GET method
+     *
+     * @param $route
+     * @param $action
+     * @return self
+     */
+    public static function get($route, $action)
+    {
+        return self::route($route, $action, ['GET']);
+    }
+
+    /**
+     * Helper for route with POST method
+     *
+     * @param $route
+     * @param $action
+     * @return self
+     */
+    public static function post($route, $action)
+    {
+        return self::route($route, $action, ['POST']);
+    }
+
+    /**
+     * Helper for route with PUT method
+     *
+     * @param $route
+     * @param $action
+     * @return self
+     */
+    public static function put($route, $action)
+    {
+        return self::route($route, $action, ['PUT']);
+    }
+
+    /**
+     * Helper for route with DELETE method
+     *
+     * @param $route
+     * @param $action
+     * @return self
+     */
+    public static function delete($route, $action)
+    {
+        return self::route($route, $action, ['DELETE']);
+    }
+
+    /**
+     * Helper for route with GET, POST, PUT, DELETE method
+     *
+     * @param $route
+     * @param $action
+     * @return self
+     */
+    public static function any($route, $action)
+    {
+        return self::route($route, $action, ['GET', 'POST', 'PUT', 'DELETE']);
+    }
+
+    /**
+     * Create all routes for resource (CRUD)
+     *
+     * @param $route
+     * @param $controller
+     * @param string $name
+     * @param string $shortcut
+     */
+    public static function resource($route, $controller, $name = null, $shortcut = 's')
+    {
+        self::$name = self::$name . $name;
+
+        self::get($route . '/{page::paginator}?', $controller . "@index")->name('index');
+        self::get($route . "/create", $controller . "@create")->name('create');
+        self::post($route, $controller . "@store")->name('store');
+        self::get($route . "/{id::" . $shortcut . "}", $controller . "@show")->name('show');
+        self::get($route . "/{id::" . $shortcut . "}/edit", $controller . "@edit")->name('edit');
+        self::put($route . "/{id::" . $shortcut . "}", $controller . "@update")->name('update');
+        self::delete($route . "/{id::" . $shortcut . "}", $controller . "@destroy")->name('destroy');
+        self::get($route . "/{id::" . $shortcut . "}/delete", $controller . "@destroy")->name('destroy_');
+
+        self::$name = str_replace($name, '', self::$name);
+    }
+
+
+    /**
+     * Handle dynamic parameter in route
+     *
+     * @param string $route
+     * @param array $params
+     * @param boolean $optional
+     * @return mixed
+     */
+    private static function dynamic($route, &$params, $optional = false)
+    {
+        $shortcut = self::rules($route);
+
+        $name = str_replace('{', '', $route);
+        if (!$optional) $name = str_replace('}', '', $name);
+        else $name = str_replace('}?', '', $name);
+
+        if (strpos($name, '::')) {
+            $name = substr($name, 0, strpos($name, "::"));
+        }
+
+        if (array_search($name, array_column($params, 'name')) === false) {
+
+            $pattern = str_replace('(', '(/', $shortcut['shortcut']);
+            $pattern = str_replace('|', '|/', $pattern);
+
+            // If is optional add ? at the end of pattern
+            if ($optional) {
+                $pattern .= '?';
+            }
+
+            $params[] = [
+                'name' => $name,
+                'pattern' => $pattern,
+                'default' => $shortcut['default']
+            ];
+        } else {
+            die('Parameter with name ' . $name . ' has been already defined');
+        }
+        return $pattern;
+    }
+
+    /**
+     * Dynamic route rules
+     *
+     * @param $route
+     * @return mixed
+     */
+    private static function rules($route)
+    {
+        if (preg_match('~::(.*?)}~', $route, $match)) {
+            list(, $shortcut) = $match;
+            if (isset(self::$shortcuts[$shortcut])) {
+                // Try to get default value from shortcut
+                $default = '';
+                $shortcut = self::$shortcuts[$shortcut];
+                if (preg_match('~->(.*?)$~', $shortcut, $match)) {
+                    $default = $match[1];
+                    $shortcut = str_replace($match[0], '', $shortcut);
+                }
+                // Return shortcut and default value
+                return [
+                    'shortcut' => $shortcut,
+                    'default' => $default
+                ];
+            }
+        }
+        return [
+            'shortcut' => self::$shortcuts['s'],
+            'default' => ''
+        ];
+    }
+
+    /**
+     * Execute router
+     *
+     * @param $ROOT
+     * @return boolean
+     */
+    public static function execute($ROOT)
+    {
+        // Generate request and absolute path
+        self::generateURL($ROOT);
+
+        // Get query string
+        $request = explode('?', $_SERVER['REQUEST_URI']);
+        $queryParams = [];
+        if (isset($request[1])) {
+            $queryParams = $request[1];
+            parse_str($queryParams, $queryParams);
+            self::$queryParams = $queryParams;
+        }
+
+        // Modify request
+        $request = '/' . trim(self::$REQUEST, '/');
+
+        // Find route
+        foreach (self::$routes as $routeKey => $route) {
+            $matchMethod = in_array($_SERVER['REQUEST_METHOD'], $route['method']) || (isset($_POST["_method"])
+                    && in_array($_POST["_method"], $route['method']));
+            if (preg_match($route['pattern'], $request, $match) && $matchMethod) {
+
+                // Default variables
+                $explodedRequest = explode('/', ltrim($request, '/'));
+                $routeParams = $route['params'];
+                $params = [];
+
+                // Match request params with params in array - static params
+                foreach ($explodedRequest as $key => $value) {
+                    foreach ($routeParams as $k => $routeParam) {
+                        // Go to the next request part
+                        if (isset($routeParam['real']) && $routeParam['pattern'] == $value) {
+                            unset($routeParams[$k]);
+                            unset($explodedRequest[$key]);
+                            break;
+                        }
+                    }
+                }
+
+                // Match request params with params in array - dynamic params
+                foreach ($explodedRequest as $key => $value) {
+                    foreach ($routeParams as $k => $routeParam) {
+                        if ($k >= $key && ($k - $key) < 2) {
+                            if (preg_match('~' . $routeParam['pattern'] . '~', '/' . $value, $match)) {
+                                $params[$routeParam['name']] = $value;
+                                unset($routeParams[$k]);
+                            }
+                        }
+                    }
+                }
+
+                // Last try to assign params - only with default values
+                foreach ($routeParams as $k => $routeParam) {
+                    if (!isset($routeParam['default'])) continue;
+                    $params[$routeParam['name']] = $routeParam['default'];
+                }
+
+                // Resort params to default order
+                $resortedParams = [];
+                foreach ($route['params'] as $k => $routeParam) {
+                    if (isset($routeParam['name']) && isset($params[$routeParam['name']])) {
+                        $resortedParams[$routeParam['name']] = $params[$routeParam['name']];
+                    }
+                }
+
+                // Merge with query params
+                $resortedParams = array_merge($resortedParams, $queryParams);
+                self::$params = $resortedParams;
+
+                // Check if can redirect to some defaults
+                $link =  self::link($routeKey, $resortedParams, false);
+                if (trim($request, '/') !== $link) {
+                    header('Location: ' . self::$URL . $link . (!empty(self::$queryParams) ? '?' . http_build_query(self::$queryParams) : ''));
+                }
+
+                // Setup default route and url
+                self::$route = $route;
+
+                // If is post request
+                if (in_array('POST', $route['method']) || in_array('PUT', $route['method']) || in_array('DELETE', $route['method'])) {
+                    $contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
+                    if (strcasecmp($contentType, 'application/json') !== false) {
+                        $post = json_decode(file_get_contents('php://input'), true);
+                    } else {
+                        $post = $_POST;
+                    }
+                    array_unshift($resortedParams, $post);
+                }
+
+                // Check if there are some unwanted params
+                $params = $resortedParams;
+                foreach ($resortedParams as $key => $value) {
+                    if (in_array($key, $route['doNotIncludeInParams']) && !is_numeric($key)) {
+                        unset($resortedParams[$key]);
+                    }
+                }
+
+                // Call action
+                if (is_callable($route['action'])) {
+                    call_user_func_array($route['action'], $resortedParams);
+                } else if (strpos($route['action'], '@') !== false) {
+                    // call controller
+                    list($controller, $method) = explode('@', $route['action']);
+
+                    // init new controller
+                    $controller = new $controller;
+
+                    // Check if class has parent
+                    $parentControllers = class_parents($controller);
+                    if (!empty($parentControllers)) {
+                        end($parentControllers);
+                        $parentController = $parentControllers[key($parentControllers)];
+                        $parentController = new $parentController;
+
+                        // Add properties to parent class
+                        foreach ($params as $key => $value) {
+                            $parentController::$params[$key] = $value;
+                        }
+                    }
+
+                    // Call method
+                    call_user_func_array([$controller, $method], $resortedParams);
+                }
+                return 'SUCCESS';
+            }
+        }
+        return 'PAGE_NOT_FOUND';
+    }
+
+    /**
+     * Generate URL
+     *
+     * @param $ROOT
+     */
+    private static function generateURL($ROOT)
+    {
+        $baseLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
+        $baseLink .= "://" . $_SERVER['SERVER_NAME'];
+        $baseLink .= ($_SERVER['SERVER_PORT'] !== '80' ? ':' . $_SERVER['SERVER_PORT'] : '');
+
+        $baseRequest = '';
+
+        $request = $_SERVER['REQUEST_URI'];
+        foreach (explode('/', $ROOT) as $key => $value) {
+            if ($value == '') continue;
+            if (preg_match('~/' . $value . '~', $request)) {
+                $baseRequest .= $value . '/';
+            }
+            $request = preg_replace('~/' . $value . '~', '', $request, 1);
+        }
+
+        self::$URL = $baseLink . '/' . $baseRequest;
+        self::$REQUEST = explode('?', $request)[0];
+    }
 }
