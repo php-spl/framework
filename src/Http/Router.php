@@ -145,10 +145,10 @@ class Router
      * @param $route
      * @param array $params
      */
-    public static function redirect($route, $params = [])
+    public static function redirect($route, $params = [], $absolute = true)
     {
         if (isset(self::$routes[$route])) {
-            $route = self::link($route, $params);
+            $route = self::link($route, $params, $absolute);
         }
         header('Location: ' . $route, true);
         die();
@@ -188,8 +188,7 @@ class Router
             $prefix = rtrim(self::$prefix, '/');
         }
 
-
-        $explodedRoute = explode("/", $prefix . $route);
+        $explodedRoute = explode("/", $prefix . ltrim($route, '/'));
         $params = [];
         $pattern = "";
 
@@ -396,14 +395,10 @@ class Router
     /**
      * Execute router
      *
-     * @param $ROOT
      * @return boolean
      */
-    public static function execute($ROOT)
+    public static function run()
     {
-        // Generate request and absolute path
-        self::generateURL($ROOT);
-
         // Get query string
         $request = explode('?', $_SERVER['REQUEST_URI']);
         $queryParams = [];
@@ -523,35 +518,35 @@ class Router
                     // Call method
                     call_user_func_array([$controller, $method], $resortedParams);
                 }
-                return 'SUCCESS';
+                return true;
             }
         }
-        return 'PAGE_NOT_FOUND';
+        if (isset(self::$routes['404'])) {
+            return self::redirect('404');
+        } else {
+            echo 'ERROR 404: Page not found!';
+        }
     }
 
     /**
-     * Generate URL
-     *
-     * @param $ROOT
+     * Handle request and generate URL and request
      */
-    private static function generateURL($ROOT)
+    public static function setup($url)
     {
-        $baseLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
-        $baseLink .= "://" . $_SERVER['SERVER_NAME'];
-        $baseLink .= ($_SERVER['SERVER_PORT'] !== '80' ? ':' . $_SERVER['SERVER_PORT'] : '');
+        self::$URL = $url . '/';
 
-        $baseRequest = '';
+        $request = '';
+        
+		if(isset($_SERVER['PATH_INFO'])){
+			$request = $_SERVER['PATH_INFO'];
+		}else{
+			$request = '/' . str_replace($_SERVER['SCRIPT_NAME'], '', $_SERVER['PHP_SELF']);
+		}
 
-        $request = $_SERVER['REQUEST_URI'];
-        foreach (explode('/', $ROOT) as $key => $value) {
-            if ($value == '') continue;
-            if (preg_match('~/' . $value . '~', $request)) {
-                $baseRequest .= $value . '/';
-            }
-            $request = preg_replace('~/' . $value . '~', '', $request, 1);
-        }
+		if($request != '/') {
+			$request = rtrim($request, '/');
+		}
 
-        self::$URL = $baseLink . '/' . $baseRequest;
         self::$REQUEST = explode('?', $request)[0];
     }
 }
