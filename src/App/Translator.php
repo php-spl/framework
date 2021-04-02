@@ -55,6 +55,7 @@ class Translator
         static::checkIfHasBeenInitialized();
         static::checkIfLocalesAreLoaded();
 
+        /*
         if (is_string($localeKey) && !empty(static::$loadedLocales[static::$currentLanguage][$localeKey]))
         {
             $text = static::$loadedLocales[static::$currentLanguage][$localeKey];
@@ -63,6 +64,28 @@ class Translator
             {
                 foreach ($parameters as $parameter => $replacement)
                 {
+                    $text = str_replace(static::$parameterEnclosingChars[0] . $parameter . static::$parameterEnclosingChars[1], $replacement, $text);
+                }
+            }
+
+            return $text;
+        }
+        */
+
+        if(is_string($localeKey)) {
+            $segments = explode('.', $localeKey);
+            $text = static::$loadedLocales[static::$currentLanguage];
+
+            foreach($segments as $segment) {
+                if(isset($text[$segment])) {
+                    $text = $text[$segment];
+                } else {
+                    break;
+                }
+            }
+
+            if (!empty($parameters) && is_array($parameters)) {
+                foreach ($parameters as $parameter => $replacement) {
                     $text = str_replace(static::$parameterEnclosingChars[0] . $parameter . static::$parameterEnclosingChars[1], $replacement, $text);
                 }
             }
