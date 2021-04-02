@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Env;
+namespace Web\App;
 
 class Config
 {

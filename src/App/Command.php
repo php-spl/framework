@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Console;
+namespace Web\App;
 
 class Command
 {
