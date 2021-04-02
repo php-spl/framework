@@ -3,6 +3,7 @@
 namespace Web\Database;
 
 use Web\Database\QueryBuilder;
+use Web\Database\Interfaces\ModelInterface;
 
 class Model extends QueryBuilder implements ModelInterface
 {
