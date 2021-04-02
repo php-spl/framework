@@ -64,7 +64,8 @@ class QueryBuilder
 
     public function getTableFromChildModelPlural()
     {
-        return strtolower(array_pop(explode('\\', static::class))) . 's';
+        $model = str_replace('Model', '', static::class);
+        return strtolower(array_pop(explode('\\', $model))) . 's';
     }
 
     /**
