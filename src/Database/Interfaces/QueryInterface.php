@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Database;
+namespace Web\Database\Interfaces;
 
 interface QueryInterface
 {

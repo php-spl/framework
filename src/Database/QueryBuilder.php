@@ -8,7 +8,7 @@ use PDOException;
 
 use Web\Database\Connection;
 
-class QueryBuilder implements QueryInterface
+class QueryBuilder
 {  
     // actions
     const ACTION_INSERT = "INSERT";
