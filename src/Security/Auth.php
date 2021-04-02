@@ -2,30 +2,46 @@
 
 namespace Web\Security;
 
+use Web\Database\QueryInterface;
+use Web\Session\SessionInterface;
+use Web\Session\Cookie;
+
 class Auth {
 
-    public $session = 'user'; 
+    public $name = 'user'; 
+
     public $user_id = 'id';
     public $email = 'email';
     public $username = 'username';
 
-    protected $user;
+    // Cookies
+    public $expiry = (86400 * 14); // days
 
-    public function __construct($user)
+    protected $user;
+    protected $session;
+    protected $cookie;
+
+    public function __construct(QueryInterface $user, SessionInterface $session, Cookie $cookie)
     {
         $this->user = $user;
+        $this->session = $session;
+        $this->cookie = $cookie;
     }
 
     public function user() 
     {
         if($this->check()) { 
-            return $this->user->where($this->user_id, $_SESSION[$this->session])->first();
+            return $this->user->where($this->user_id, $_SESSION[$this->name])->first();
         }
     }
 
     public function check() 
     {
-        return isset($_SESSION[$this->session]);
+        if($this->session->has($this->name) || $this->cookie->has($this->name)) {
+            return true;
+        }
+
+        return false;
     }
 
     public function hash($password, $algo = PASSWORD_DEFAULT)
@@ -33,12 +49,15 @@ class Auth {
        return password_hash($password, $algo);
     }
 
-    public function attempt($auth, $password) 
+    public function attempt($emailOrUsername, $password, $remember = false) 
     {
+        if($this->check()) {
+            return true;
+        }
 
         $user = $this->user
-        ->where($this->email, $auth)
-        ->orWhere($this->username, $auth)
+        ->where($this->email, $emailOrUsername)
+        ->orWhere($this->username, $emailOrUsername)
         ->first();
 
         if (!$user) {
@@ -46,7 +65,14 @@ class Auth {
         }
 
         if (password_verify($password, $user->password)) {
-            $_SESSION[$this->session] = $user->{$this->user_id};
+            $user_id = $user->{$this->user_id};
+
+            $_SESSION[$this->name] = $user_id;
+            
+            if($remember) {
+                $this->cookie->set($this->name, $user_id, $this->expiry);
+            }
+
             return true;
         }
 
@@ -56,8 +82,19 @@ class Auth {
     public function logout() 
     {
         if($this->check()) {
-            unset($_SESSION[$this->session]);
+
+            if($this->session->has($this->name)) {
+                $this->session->delete($this->name);    
+            }
+
+            if($this->cookie->has($this->name)) {
+                $this->cookie->delete($this->name);
+            }
+
+            return true;
         }
+        
+        return false;
     }
 
 }

@@ -8,7 +8,7 @@ use PDOException;
 
 use Web\Database\Connection;
 
-class QueryBuilder
+class QueryBuilder implements QueryInterface
 {  
     // actions
     const ACTION_INSERT = "INSERT";
@@ -311,6 +311,7 @@ class QueryBuilder
     {
         return $this->addConditionalClause($this->where, $field, $sign, $value, $cond);
     }
+
     public function orWhere($field, string $sign = null, $value = null)
     {
         return $this->where($field, $sign, $value, "OR");
@@ -320,14 +321,17 @@ class QueryBuilder
     {
         return $this->where("$field IS NULL");
     }
+
     public function orWhereNull(string $field): self
     {
         return $this->orWhere("$field IS NULL");
     }
+
     public function whereNotNull(string $field): self
     {
         return $this->where("$field IS NOT NULL");
     }
+
     public function orWhereNotNull(string $field): self
     {
         return $this->orWhere("$field IS NOT NULL");
@@ -342,14 +346,17 @@ class QueryBuilder
     {
         return $this->where("$field BETWEEN $min AND $max");
     }
+
     public function orWhereBetween(string $field, $min, $max): self
     {
         return $this->orWhere("$field BETWEEN $min AND $max");
     }
+
     public function whereNotBetween(string $field, $min, $max): self
     {
         return $this->where("$field NOT BETWEEN $min AND $max");
     }
+
     public function orWhereNotBetween(string $field, $min, $max): self
     {
         return $this->orWhere("$field NOT BETWEEN $min AND $max");
@@ -360,16 +367,19 @@ class QueryBuilder
         $values = implode(", ", $values);
         return $this->where("$field IN ($values)");
     }
+
     public function orWhereIn(string $field, array $values): self
     {
         $values = implode(", ", $values);
         return $this->orWhere("$field IN ($values)");
     }
+
     public function whereNotIn(string $field, array $values): self
     {
         $values = implode(", ", $values);
         return $this->where("$field NOT IN ($values)");
     }
+
     public function orWhereNotIn(string $field, array $values): self
     {
         $values = implode(", ", $values);
@@ -377,7 +387,6 @@ class QueryBuilder
     }
 
     // order by, group by, having
-
     protected function buildOrderByQueryString(): string
     {
         if (empty($this->orderBy)) {
@@ -680,14 +689,14 @@ class QueryBuilder
         $this->inputParams = $formattedInput;
     }
 
-    public function exists($options = null)
+    public function exists($options = null): bool
     {
         $this->action = self::ACTION_SELECT;
         $this->execute($options); 
         return $this->count() ? true : false;
     }
 
-    public function results()
+    public function results(): array
     {
         return $this->results;
     }

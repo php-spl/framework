@@ -4,10 +4,16 @@ namespace Web\Session;
 
 class Cookie
 {
+    static $expiry = (86400 * 1); // days
+    static $path = '/';
+    static $domain = false;
+    static $secure = false;
+    static $httpOnly = true;
+
     /*
      * Check if cookie exists by name
      */
-    public static function exists($name)
+    public static function has($name)
     {
         return (isset($_COOKIE[$name])) ? true : false;
     }
@@ -23,9 +29,13 @@ class Cookie
     /*
      * Set a cookie and exipiry
      */
-    public static function set($name, $value, $expiry)
+    public static function set($name, $value, $expiry = false)
     {
-        if (setcookie($name, $value, time() + $expiry, '/', null, null, true)) {
+        if($expiry) {
+            self::$expiry = $expiry;
+        }
+
+        if (setcookie($name, $value, time() + self::$expiry, self::$path, self::$domain, self::$secure, self::$httpOnly)) {
             return true;
         }
         

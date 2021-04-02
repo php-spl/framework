@@ -13,6 +13,12 @@ class Translator
     protected static $localesDir = 'locales';
 
     /**
+     * File type to be used for parsing language files.
+     * @type string
+     */
+    protected static $fileExtension = '.json';
+
+    /**
      * The default language to use if the client language or the forced language locales are not found.
      * @type string
      */
@@ -72,6 +78,7 @@ class Translator
         }
         */
 
+        // Text is an nested array
         if(is_string($localeKey)) {
             $segments = explode('.', $localeKey);
             $text = static::$loadedLocales[static::$currentLanguage];
@@ -106,6 +113,18 @@ class Translator
         {
             self::$localesDir = $localesDir;
             static::checkIfLocalesDirExists();
+        }
+    }
+
+    /**
+     * Used to set a custom file type.
+     * @param string $localesDir
+     */
+    public static function setFileExtension($type)
+    {
+        if (is_string($type))
+        {
+            self::$fileExtension =  '.' . $type;
         }
     }
 
@@ -157,7 +176,14 @@ class Translator
         if (empty(static::$loadedLocales[static::$currentLanguage]))
         {
             static::checkIfLocaleForCurrentLanguageExists();
-            static::$loadedLocales[static::$currentLanguage] = require(static::$localesDir . '/' . static::$currentLanguage . '.php');
+
+            if(static::$fileExtension === '.php') {
+                static::$loadedLocales[static::$currentLanguage] = require(static::$localesDir . '/' . static::$currentLanguage . static::$fileExtension);
+            }
+
+            if(static::$fileExtension === '.json') {
+                static::$loadedLocales[static::$currentLanguage] = json_decode(file_get_contents(static::$localesDir . '/' . static::$currentLanguage . static::$fileExtension), true);
+            }
         }
     }
 
@@ -188,7 +214,7 @@ class Translator
      */
     protected static function checkIfLocaleForDefaultLanguageExists()
     {
-        if (!file_exists(static::$localesDir . '/' . static::$defaultLanguage . '.php'))
+        if (!file_exists(static::$localesDir . '/' . static::$defaultLanguage . static::$fileExtension))
         {
             throw new Exception('Default language locale not found!');
         }
@@ -222,7 +248,7 @@ class Translator
      */
     protected static function checkIfLocaleForCurrentLanguageExists()
     {
-        if (!file_exists(static::$localesDir . '/' . static::$currentLanguage . '.php'))
+        if (!file_exists(static::$localesDir . '/' . static::$currentLanguage . static::$fileExtension))
         {
             static::$currentLanguage = static::$defaultLanguage;
         }
