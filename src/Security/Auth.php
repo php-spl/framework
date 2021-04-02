@@ -2,7 +2,7 @@
 
 namespace Web\Security;
 
-use Web\Database\QueryInterface;
+use Web\Database\Interfaces\ModelInterface;
 use Web\Session\SessionInterface;
 use Web\Session\Cookie;
 
@@ -21,7 +21,7 @@ class Auth {
     protected $session;
     protected $cookie;
 
-    public function __construct(QueryInterface $user, SessionInterface $session, Cookie $cookie)
+    public function __construct(ModelInterface $user, SessionInterface $session, Cookie $cookie)
     {
         $this->user = $user;
         $this->session = $session;
