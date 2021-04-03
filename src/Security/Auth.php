@@ -56,6 +56,7 @@ class Auth {
         }
 
         $user = $this->user
+        ->select()
         ->where($this->email, $emailOrUsername)
         ->orWhere($this->username, $emailOrUsername)
         ->first();
@@ -74,6 +75,29 @@ class Auth {
             }
 
             return true;
+        }
+
+        return false;
+    }
+
+    public function validate($emailOrUsername, $password) 
+    {
+        if($emailOrUsername) {
+            $user = $this->user
+            ->select()
+            ->where($this->email, $emailOrUsername)
+            ->orWhere($this->username, $emailOrUsername)
+            ->first();
+
+            if (!$user) {
+                return false;
+            }
+        }
+
+        if($password) {
+            if (password_verify($password, $user->password)) {
+                return true;
+            }
         }
 
         return false;

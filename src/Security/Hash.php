@@ -4,6 +4,8 @@ namespace Web\Security;
 
 class Hash
 {
+    static $algo = 'sha256';
+
 	public static function crypt($string, $salt = '') 
     {
         return crypt($string . $salt, '$2y$10$' . $salt);
@@ -14,12 +16,14 @@ class Hash
         return strtr(substr(base64_encode(openssl_random_pseudo_bytes($length)),0,22), '+', '.');
     }
 
-    public static function make($string, $key = null) 
+    public static function make($string, $key = false, $random = false) 
     {
         if($key) {
-            return hash('sha256', $string . $key);
+            return hash(self::$algo, $string . $key);
+        } elseif($random) {
+            return hash(self::$algo, $string . self::random());
         } else {
-            return hash('sha256', $string . self::random());
+            return hash(self::$algo, $string);
         }
     }
 
@@ -28,9 +32,9 @@ class Hash
         return self::make(uniqid());
     }
 
-    public function equals($hash, $sig)
+    public static function equals($hash, $sig)
     {
-       return hash_equals(hash('sha256', $hash), $sig);
+       return hash_equals(self::make($hash), $sig);
     }
 
 }
