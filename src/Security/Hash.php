@@ -20,11 +20,13 @@ class Hash
     {
         if($key) {
             return hash(self::$algo, $string . $key);
-        } elseif($random) {
-            return hash(self::$algo, $string . self::random());
-        } else {
-            return hash(self::$algo, $string);
         }
+
+        if($random) {
+            return hash(self::$algo, $string . self::random());
+        }
+        
+        return hash(self::$algo, $string);
     }
 
     public static function unique() 
