@@ -20,8 +20,8 @@ abstract class Model extends QueryBuilder implements ModelInterface
         return self::$factory[static::class];
     }
 
-    public function __construct()
+    public function __construct(Connection $db)
     {
-        parent::__construct(Connection::factory());
+        parent::__construct($db);
     } 
 }
