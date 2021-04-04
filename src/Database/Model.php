@@ -6,7 +6,7 @@ use Web\Database\Connection;
 use Web\Database\QueryBuilder;
 use Web\Database\Interfaces\ModelInterface;
 
-abstract class Model extends QueryBuilder implements ModelInterface
+class Model extends QueryBuilder implements ModelInterface
 {
     protected static $factory = null;
 

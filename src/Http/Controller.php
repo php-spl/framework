@@ -5,8 +5,13 @@ namespace Web\Http;
 use Web\Http\Interfaces\ControllerInterface;
 use Exception;
 
-abstract class Controller implements ControllerInterface
+class Controller implements ControllerInterface
 {
+    /**
+     * @var array $params
+     */
+    public static $params = [];
+    
     /**
     * @var array Before Middlewares
     */
@@ -20,6 +25,8 @@ abstract class Controller implements ControllerInterface
     public $middlewareAfter = [
         
     ];
+
+
 
     public function index()
     {
