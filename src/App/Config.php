@@ -15,9 +15,9 @@ class Config
         }
     }
 
-    public function load($file)
+    public function load(array $file)
     {
-        $this->data = require $file;
+        $this->data = $file;
     }
 
     public function get($key, $default = null)
