@@ -521,11 +521,12 @@ class Router
                 return true;
             }
         }
-        if (isset(self::$routes['404'])) {
-            return self::redirect('404');
+        if (isset(self::$routes['error'])) {
+            return self::redirect('error');
         } else {
             echo 'ERROR 404: Page not found!';
         }
+        return false;
     }
 
     /**
