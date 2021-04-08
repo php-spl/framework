@@ -4,7 +4,7 @@ namespace Web\Http;
 
 class Request
 {
-    public static function exists($type = 'post') {
+    public static function has($type = 'post') {
         switch ($type) {
             case 'post':
                 return (!empty($_POST)) ? true : false;
@@ -36,7 +36,7 @@ class Request
 
     public static function input($key, $string = null)
     {
-        if (self::exists($key)) {
+        if (self::has($key)) {
             $input = self::get($key);
             $_SESSION[$key] = $input;
             return $input;
