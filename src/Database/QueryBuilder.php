@@ -689,7 +689,7 @@ class QueryBuilder
         $this->inputParams = $formattedInput;
     }
 
-    public function exists($options = null): bool
+    public function has($options = null): bool
     {
         $this->action = self::ACTION_SELECT;
         $this->execute($options); 

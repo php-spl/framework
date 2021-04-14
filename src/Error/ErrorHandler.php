@@ -20,7 +20,7 @@ class ErrorHandler
         return isset($this->errors[$key]) ? $this->errors[$key] : $this->errors;
     }
 
-    public function exists()
+    public function has()
     {
         return count($this->get()) ? true : false;
     }

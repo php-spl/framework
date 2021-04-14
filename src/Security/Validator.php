@@ -59,7 +59,7 @@ class Validator
 
     public function fails()
     {
-        return $this->errors->exists();
+        return $this->errors->has();
     }
 
     public function errors()
@@ -115,6 +115,6 @@ class Validator
 
     protected function unique($field, $value, $check)
     {
-        return !$this->db->table($check)->where($field, '=', $value)->exists();
+        return !$this->db->table($check)->where($field, '=', $value)->has();
     }
 }

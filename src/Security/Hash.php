@@ -4,7 +4,7 @@ namespace Web\Security;
 
 class Hash
 {
-    static $algo = 'sha256';
+    public static $algo = 'sha256';
 
 	public static function crypt($string, $salt = '') 
     {

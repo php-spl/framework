@@ -17,4 +17,9 @@ class Intr
         }
     }
 
+    public static function random($min = null, $max = null)
+    {
+       return mt_rand($min, $max);
+    }
+
 }

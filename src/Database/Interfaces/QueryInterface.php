@@ -127,7 +127,7 @@ interface QueryInterface
 
     public function toString(): string;
 
-    public function exists($options = null): bool;
+    public function has($options = null): bool;
 
     public function results(): array;
 
