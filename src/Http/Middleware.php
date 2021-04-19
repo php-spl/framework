@@ -8,34 +8,33 @@ use Closure;
 
 class Middleware 
 {
+    private $middlewares;
 
-    private $layers;
-
-    public function __construct(array $layers = [])
+    public function __construct(array $middlewares = [])
     {
-        $this->layers = $layers;
+        $this->middlewares = $middlewares;
     }
 
     /**
-     * Add layer(s) or Onion
-     * @param  mixed $layers
-     * @return Onion
+     * Add middleware(s) or Middleware
+     * @param  mixed $middlewares
+     * @return Middleware
      */
-    public function layer($layers)
+    public function add($middlewares)
     {
-        if ($layers instanceof Middleware) {
-            $layers = $layers->toArray();
+        if ($middlewares instanceof Middleware) {
+            $middlewares = $middlewares->toArray();
         }
 
-        if ($layers instanceof MiddlewareInterface) {
-            $layers = [$layers];
+        if ($middlewares instanceof MiddlewareInterface) {
+            $middlewares = [$middlewares];
         }
 
-        if (!is_array($layers)) {
-            throw new InvalidArgumentException(get_class($layers) . " is not a valid middleware.");
+        if (!is_array($middlewares)) {
+            throw new InvalidArgumentException(get_class($middlewares) . " is not a valid middleware.");
         }
 
-        return new static(array_merge($this->layers, $layers));
+        return new static(array_merge($this->middlewares, $middlewares));
     }
 
     /**
@@ -53,18 +52,18 @@ class Middleware
         // in the array, the first function will be "closer" to the core.
         // This also means it will be run last. However, if the reverse the
         // order of the array, the first in the list will be the outer layers.
-        $layers = array_reverse($this->layers);
+        $middlewares = array_reverse($this->middlewares);
 
-        // We create the onion by starting initially with the core and then
+        // We create the middleware by starting initially with the core and then
         // gradually wrap it in layers. Each layer will have the next layer "curried"
         // into it and will have the current state (the object) passed to it.
-        $completeOnion = array_reduce($layers, function($nextLayer, $layer){
-            return $this->createLayer($nextLayer, $layer);
+        $completeMiddleware = array_reduce($middlewares, function($next, $middleware){
+            return $this->createMiddleware($next, $middleware);
         }, $coreFunction);
 
         // We now have the complete onion and can start passing the object
         // down through the layers.
-        return $completeOnion($object);
+        return $completeMiddleware($object);
     }
 
     /**
@@ -73,18 +72,18 @@ class Middleware
      */
     public function toArray()
     {
-        return $this->layers;
+        return $this->middlewares;
     }
 
     /**
-     * The inner function of the onion.
+     * The inner function of the middleware.
      * This function will be wrapped on layers
      * @param  Closure $core the core function
      * @return Closure
      */
     private function createCoreFunction(Closure $core)
     {
-        return function($object) use($core) {
+        return function($object) use ($core) {
             return $core($object);
         };
     }
@@ -92,14 +91,14 @@ class Middleware
     /**
      * Get an onion layer function.
      * This function will get the object from a previous layer and pass it inwards
-     * @param  LayerInterface $nextLayer
-     * @param  LayerInterface $layer
+     * @param  MiddlewareInterface $next
+     * @param  MiddlewareInterface $middleware
      * @return Closure
      */
-    private function createLayer($nextLayer, $layer)
+    private function createMiddleware(Closure $next, $middleware)
     {
-        return function($object) use($nextLayer, $layer){
-            return $layer->process($object, $nextLayer);
+        return function($object) use ($next, $middleware){
+            return $middleware->process($object, $next);
         };
     }
 
