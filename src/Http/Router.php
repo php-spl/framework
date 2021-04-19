@@ -420,8 +420,8 @@ class Router
         $request = explode('?', $_SERVER['REQUEST_URI']);
         $queryParams = [];
         if (isset($request[1])) {
-            $queryParams = $request[1];
-            parse_str($queryParams, $queryParams);
+            $params = $request[1];
+            parse_str($params, $queryParams);
             self::$queryParams = $queryParams;
         }
 
