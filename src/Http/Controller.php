@@ -12,21 +12,10 @@ class Controller implements ControllerInterface
      */
     public static $params = [];
     
-    /**
-    * @var array Before Middlewares
-    */
-    public $middlewareBefore = [
-       
-    ];
-
-    /**
-    * @var array After Middlewares
-    */
-    public $middlewareAfter = [
-        
-    ];
-
-
+     /**
+     * @var array $params
+     */
+    public static $middleware;
 
     public function index()
     {

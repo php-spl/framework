@@ -8,7 +8,7 @@ use Closure;
 
 class Middleware 
 {
-    private $middlewares;
+    protected $middlewares;
 
     public function __construct(array $middlewares = [])
     {
@@ -44,7 +44,7 @@ class Middleware
      * @param  Closure $core
      * @return mixed         
      */
-    public function process($object, Closure $core)
+    public function handle($object, Closure $core)
     {
         $coreFunction = $this->createCoreFunction($core);
 
@@ -98,7 +98,7 @@ class Middleware
     private function createMiddleware(Closure $next, $middleware)
     {
         return function($object) use ($next, $middleware){
-            return $middleware->process($object, $next);
+            return $middleware->handle($object, $next);
         };
     }
 

@@ -7,6 +7,6 @@ use Closure;
 interface MiddlewareInterface 
 {
 
-    public function process($object, Closure $next);
+    public function handle($object, Closure $next);
 
 }

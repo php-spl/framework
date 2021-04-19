@@ -2,8 +2,14 @@
 
 namespace Web\Http;
 
+use Web\Http\Middleware;
+use Web\App\Container;
+
 class Router
 {
+
+    private static $middleware;
+
     /**
      * @var self $instance
      */
@@ -81,12 +87,23 @@ class Router
         self::$instance = new self();
     }
 
+    public static function middleware($middleware)
+    {
+        self::$middleware = new Middleware;
+
+        if ($middleware) {
+            self::$middleware->add($middleware);
+        }
+
+        return self::$instance;
+    }
+
     /**
      * Asign name to route
      *
      * @param $name
      */
-    public function name($name)
+    public static function name($name)
     {
         $route = self::$routes[self::$last];
         unset(self::$routes[self::$last]);
@@ -397,7 +414,7 @@ class Router
      *
      * @return boolean
      */
-    public static function run()
+    public static function run(Container $container = null)
     {
         // Get query string
         $request = explode('?', $_SERVER['REQUEST_URI']);
@@ -514,6 +531,10 @@ class Router
                             $parentController::$params[$key] = $value;
                         }
                     }
+
+                    self::$middleware->handle($container, function($container) {
+                        return $container;
+                    });
 
                     // Call method
                     call_user_func_array([$controller, $method], $resortedParams);
