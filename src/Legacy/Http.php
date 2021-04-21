@@ -2,7 +2,7 @@
 
 namespace Web\Legacy;
 
-class Router
+class Http
 {
     public $request;
     public $controller;
