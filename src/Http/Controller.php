@@ -2,7 +2,7 @@
 
 namespace Spl\Http;
 
-use Web\Http\Interfaces\ControllerInterface;
+use Spl\Http\Interfaces\ControllerInterface;
 use Exception;
 
 class Controller implements ControllerInterface
