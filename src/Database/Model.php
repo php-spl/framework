@@ -1,10 +1,10 @@
 <?php
 
-namespace Web\Database;
+namespace Spl\Database;
 
-use Web\Database\Connection;
-use Web\Database\QueryBuilder;
-use Web\Database\Interfaces\ModelInterface;
+use Spl\Database\Connection;
+use Spl\Database\QueryBuilder;
+use Spl\Database\Interfaces\ModelInterface;
 
 class Model extends QueryBuilder implements ModelInterface
 {

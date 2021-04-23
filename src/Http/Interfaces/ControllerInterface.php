@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Http\Interfaces;
+namespace Spl\Http\Interfaces;
 
 interface ControllerInterface
 {

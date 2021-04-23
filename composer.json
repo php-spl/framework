@@ -1,5 +1,5 @@
 {
-    "name": "datalaere/php-web-framework",
+    "name": "php-spl/framework",
     "description": "A series of libraries/components that form the basics of many website and most frameworks.",
     "authors": [
         {
@@ -10,7 +10,7 @@
     
     "autoload": {
         "psr-4": {
-            "Web\\": "src",
+            "Spl\\": "src",
             "Tests\\": "tests"
         }
     },

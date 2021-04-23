@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Event;
+namespace Spl\Event;
 
 /**
  * Representation of an event (Proposed PSR-14)

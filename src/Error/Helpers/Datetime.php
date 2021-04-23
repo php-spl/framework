@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Error\Helpers;
+namespace Spl\Error\Helpers;
 
 /**
  * Replace the record's timestamp by a formatted datetime (as a string)

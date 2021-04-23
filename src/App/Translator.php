@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\App;
+namespace Spl\App;
 
 use Exception;
 

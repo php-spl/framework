@@ -1,9 +1,9 @@
 <?php
 
-namespace Web\Error;
+namespace Spl\Error;
 
 use Psr\Error\InvalidArgumentException;
-use Web\Error\Traits;
+use Spl\Error\Traits;
 
 class Logger implements Interfaces\Logger
 {

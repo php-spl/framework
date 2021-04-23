@@ -1,9 +1,9 @@
 <?php
 
-namespace Web\Error\Writers;
+namespace Spl\Error\Writers;
 
-use Web\Error\Interfaces;
-use Web\Error\Traits;
+use Spl\Error\Interfaces;
+use Spl\Error\Traits;
 
 abstract class Writer implements Interfaces\Writer
 {

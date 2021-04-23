@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Cache;
+namespace Spl\Cache;
 
 use Psr\SimpleCache\CacheInterface;
 use Psr\Cache\CacheItemPoolInterface;

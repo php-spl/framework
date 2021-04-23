@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\Error\Helpers;
+namespace Spl\Error\Helpers;
 
-use Web\Error\Traits;
+use Spl\Error\Traits;
 
 /**
  * Replace words surrounded by curly braces in the message by values found in the context.

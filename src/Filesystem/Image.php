@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Filesystem;
+namespace Spl\Filesystem;
 
 class Image
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Error;
+namespace Spl\Error;
 
 class ErrorHandler
 {

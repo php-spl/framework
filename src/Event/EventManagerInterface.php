@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Event;
+namespace Spl\Event;
 
 /**
  * Interface for EventManager (Proposed PSR-14)

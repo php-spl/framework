@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Http;
+namespace Spl\Http;
 
 use Web\Http\Interfaces\ControllerInterface;
 use Exception;

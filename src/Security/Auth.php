@@ -1,10 +1,10 @@
 <?php
 
-namespace Web\Security;
+namespace Spl\Security;
 
-use Web\Database\Interfaces\ModelInterface;
-use Web\Session\SessionInterface;
-use Web\Session\Cookie;
+use Spl\Database\Interfaces\ModelInterface;
+use Spl\Session\SessionInterface;
+use Spl\Globals\Cookie;
 
 class Auth {
 

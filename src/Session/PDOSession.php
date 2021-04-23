@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Session;
+namespace Spl\Session;
 
 class PDOSession implements SessionInterface
 {

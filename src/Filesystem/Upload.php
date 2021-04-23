@@ -1,9 +1,7 @@
 <?php
 
+namespace Spl\Filesystem;
 
-/**
- * Simple PHP 
- */
 class Upload {
 
 

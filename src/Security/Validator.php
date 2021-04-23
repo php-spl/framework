@@ -1,9 +1,9 @@
 <?php
 
-namespace Web\Security;
+namespace Spl\Security;
 
-use Web\Database\Model;
-use Web\Error\ErrorHandler;
+use Spl\Database\Model;
+use Spl\Error\ErrorHandler;
 
 class Validator
 {

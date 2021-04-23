@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Error\Interfaces;
+namespace Spl\Error\Interfaces;
 
 interface HelperAware
 {

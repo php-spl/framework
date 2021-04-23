@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Event;
+namespace Spl\Event;
 
 class EventManager implements EventManagerInterface
 {

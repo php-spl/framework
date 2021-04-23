@@ -1,9 +1,9 @@
 <?php
 
-namespace Web\Http;
+namespace Spl\Http;
 
-use Web\Http\Middleware;
-use Web\App\Container;
+use Spl\Http\Middleware;
+use Spl\App\Container;
 
 class Router
 {

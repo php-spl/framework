@@ -1,6 +1,6 @@
 <?php
 
-namespace Web\Session;
+namespace Spl\Session;
 
 interface SessionInterface
 {

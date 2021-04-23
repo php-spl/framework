@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\Http;
+namespace Spl\Http;
 
-use Web\Http\Interfaces\MiddlewareInterface;
+use Spl\Http\Interfaces\MiddlewareInterface;
 use InvalidArgumentException;
 use Closure;
 

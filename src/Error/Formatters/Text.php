@@ -1,8 +1,8 @@
 <?php
 
-namespace Web\Error\Formatters;
+namespace Spl\Error\Formatters;
 
-use Web\Error\Traits;
+use Spl\Error\Traits;
 
 class Text
 {
