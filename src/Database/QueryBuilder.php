@@ -6,7 +6,7 @@ use PDO;
 use Exception;
 use PDOException;
 
-use Web\Database\Connection;
+use Spl\Database\Connection;
 
 class QueryBuilder
 {  
