@@ -1,9 +1,9 @@
 <?php
 
-namespace Classes\Proxies;
+namespace Spl\DI;
 
 use Closure;
-use Classes\Container;
+use Spl\DI\Container;
 use RuntimeException;
 
 abstract class Proxy
@@ -21,85 +21,6 @@ abstract class Proxy
      * @var array
      */
     protected static $resolvedInstance;
-
-    /**
-     * Run a Closure when the Proxy has been resolved.
-     *
-     * @param  \Closure  $callback
-     * @return void
-     */
-    public static function resolved(Closure $callback)
-    {
-        $accessor = static::getProxyAccessor();
-
-        if (static::$app->resolved($accessor) === true) {
-            $callback(static::getProxyRoot());
-        }
-
-        static::$app->afterResolving($accessor, function ($service) use ($callback) {
-            $callback($service);
-        });
-    }
-
-    /**
-     * Initiate a partial mock on the Proxy.
-     *
-     * @return \Mockery\MockInterface
-     */
-    public static function partialMock()
-    {
-        $name = static::getProxyAccessor();
-
-        $mock = static::isMock()
-            ? static::$resolvedInstance[$name]
-            : static::createFreshMockInstance();
-
-        return $mock->makePartial();
-    }
-
-    /**
-     * Initiate a mock expectation on the Proxy.
-     *
-     * @return \Mockery\Expectation
-     */
-    public static function shouldReceive()
-    {
-        $name = static::getProxyAccessor();
-
-        $mock = static::isMock()
-                    ? static::$resolvedInstance[$name]
-                    : static::createFreshMockInstance();
-
-        return $mock->shouldReceive(...func_get_args());
-    }
-
-    /**
-     * Initiate a mock expectation on the Proxy.
-     *
-     * @return \Mockery\Expectation
-     */
-    public static function expects()
-    {
-        $name = static::getProxyAccessor();
-
-        $mock = static::isMock()
-            ? static::$resolvedInstance[$name]
-            : static::createFreshMockInstance();
-
-        return $mock->expects(...func_get_args());
-    }
-
-    /**
-     * Get the mockable class for the bound instance.
-     *
-     * @return string|null
-     */
-    protected static function getMockableClass()
-    {
-        if ($root = static::getProxyRoot()) {
-            return get_class($root);
-        }
-    }
 
     /**
      * Hotswap the underlying instance behind the Proxy.

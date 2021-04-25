@@ -1,6 +1,6 @@
 <?php
 
-namespace Classes;
+namespace Spl\DI;
 
 abstract class Singleton
 {
