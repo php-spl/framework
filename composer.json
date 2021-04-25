@@ -9,6 +9,9 @@
     ],
     
     "autoload": {
+        "files": [
+            "src/helpers.php"
+        ],
         "psr-4": {
             "Spl\\": "src",
             "Tests\\": "tests"
