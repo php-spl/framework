@@ -1,7 +1,10 @@
 <?php
 
-namespace Spl\App;
+namespace Spl\DI;
 
+use Exception;
+use ReflectionClass;
+use UnexpectedValueException;
 use Psr\Container\ContainerInterface;
 
 class Container implements ContainerInterface
@@ -96,7 +99,7 @@ class Container implements ContainerInterface
                 return $this->createObject($serviceName);
             }
 
-            throw new \Exception("Service '$serviceName' not found.");
+            throw new Exception("Service '$serviceName' not found.");
         }
 
         $value = $this->services[$serviceName];
@@ -129,13 +132,13 @@ class Container implements ContainerInterface
                 return $this->createObject($value);
             }
 
-            throw new \UnexpectedValueException("Service '$serviceName' resolve to a string value '$value' that is neither another known service nor a class name.");
+            throw new UnexpectedValueException("Service '$serviceName' resolve to a string value '$value' that is neither another known service nor a class name.");
         }
 
         // by this point $value is not an object factory(callable), constructor arguments (array) or an alias (string)
         // it's also something else than an object instance since set() already cache instance that would be passed to it
         $type = gettype($value);
-        throw new \UnexpectedValueException("Unexpected value with type '$type' for service '$serviceName'");
+        throw new UnexpectedValueException("Unexpected value with type '$type' for service '$serviceName'");
     }
 
     /**
@@ -146,7 +149,7 @@ class Container implements ContainerInterface
      */
     protected function createObject(string $className, array $manualArguments = [])
     {
-        $class = new \ReflectionClass($className);
+        $class = new ReflectionClass($className);
         $constructor = $class->getConstructor();
 
         if ($constructor === null) {
@@ -187,14 +190,14 @@ class Container implements ContainerInterface
             if ($typeName === "" || $typeIsBuiltin) {
                 // no type hint or not an object
                 if ($isParamMandatory) {
-                    throw new \Exception("Constructor argument '$paramName' for class '$className' has no type-hint or is of built-in type '$typeName' but value is not manually specified in the container.");
+                    throw new Exception("Constructor argument '$paramName' for class '$className' has no type-hint or is of built-in type '$typeName' but value is not manually specified in the container.");
                 }
                 continue;
             }
 
             // param is a class or interface (internal or userland)
             if (interface_exists($typeName) && !$this->has($typeName)) {
-                throw new \Exception("Constructor argument '$paramName' for class '$className' is type-hinted with the interface '$typeName' but no alias for it is set in the container.");
+                throw new Exception("Constructor argument '$paramName' for class '$className' is type-hinted with the interface '$typeName' but no alias for it is set in the container.");
             }
 
             $object = null;
@@ -202,8 +205,8 @@ class Container implements ContainerInterface
             if ($isParamMandatory) {
                 try {
                     $object = $this->get($typeName);
-                } catch (\Exception $exception) {
-                    throw new \Exception("Constructor argument '$paramName' for class '$className' has type '$typeName' but the container don't know how to resolve it.");
+                } catch (Exception $exception) {
+                    throw new Exception("Constructor argument '$paramName' for class '$className' has type '$typeName' but the container don't know how to resolve it.");
                 }
             }
 
