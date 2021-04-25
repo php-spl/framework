@@ -1,9 +1,30 @@
 <?php
 
-namespace Spl\App;
+namespace Spl\Console;
 
 class Command
 {
+    const COLOR_DEFAULT = "default";
+    const COLOR_RED = "red";
+    const COLOR_GREEN = "green";
+    const COLOR_YELLOW = "yellow";
+    const COLOR_BLUE = "blue";
+    const COLOR_MAGENTA = "magenta";
+    const COLOR_CYAN = "cyan";
+    const COLOR_GRAY = "gray";
+
+    protected $colors = [
+        "default" => "0",
+        "red" => "1",
+        "green" => "2",
+        "brown" => "3",
+        "blue" => "4",
+        "magenta" => "5",
+        "cyan" => "6",
+        "gray" => "7",
+        "other1" => "8",
+    ];
+    
     /**
      * @var array Raw argument list. Original $argv argument passed to init() or $_SERVER['argv'].
      */
@@ -174,27 +195,6 @@ class Command
 
         return $hasOption;
     }
-
-    const COLOR_DEFAULT = "default";
-    const COLOR_RED = "red";
-    const COLOR_GREEN = "green";
-    const COLOR_YELLOW = "yellow";
-    const COLOR_BLUE = "blue";
-    const COLOR_MAGENTA = "magenta";
-    const COLOR_CYAN = "cyan";
-    const COLOR_GRAY = "gray";
-
-    protected $colors = [
-        "default" => "0",
-        "red" => "1",
-        "green" => "2",
-        "brown" => "3",
-        "blue" => "4",
-        "magenta" => "5",
-        "cyan" => "6",
-        "gray" => "7",
-        "other1" => "8",
-    ];
 
     public function getColoredText(string $value, string $bgColor = null, string $textColor = null)
     {

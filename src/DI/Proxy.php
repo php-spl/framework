@@ -3,15 +3,15 @@
 namespace Spl\DI;
 
 use Closure;
-use Spl\DI\Container;
 use RuntimeException;
+use Psr\Container\ContainerInterface;
 
 abstract class Proxy
 {
     /**
      * The application instance being Proxied.
      *
-     * @var Container
+     * @var \Psr\Container\ContainerInterface;
      */
     protected static $app;
 
@@ -33,7 +33,7 @@ abstract class Proxy
         static::$resolvedInstance[static::getProxyAccessor()] = $instance;
 
         if (isset(static::$app)) {
-            static::$app->instance(static::getProxyAccessor(), $instance);
+            static::$app->get(static::getProxyAccessor(), $instance);
         }
     }
 
@@ -56,7 +56,7 @@ abstract class Proxy
      */
     protected static function getProxyAccessor()
     {
-        throw new RuntimeException('Proxy does not implement getProxyAccessor method.');
+        throw new RuntimeException('Proxy class does not implement getProxyAccessor method.');
     }
 
     /**
@@ -104,7 +104,7 @@ abstract class Proxy
     /**
      * Get the application instance behind the Proxy.
      *
-     * @return \Illuminate\Contracts\Foundation\Application
+     * @return Psr\Container\ContainerInterface;
      */
     public static function getProxyApplication()
     {
@@ -114,10 +114,10 @@ abstract class Proxy
     /**
      * Set the application instance.
      *
-     * @param  \Illuminate\Contracts\Foundation\Application  $app
+     * @param \Psr\Container\ContainerInterface $app
      * @return void
      */
-    public static function setProxyApplication($app)
+    public static function setProxyApplication(ContainerInterface $app)
     {
         static::$app = $app;
     }

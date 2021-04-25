@@ -1,6 +1,6 @@
 <?php
 
-namespace Spl\App;
+namespace Spl\Filesystem;
 
 use Exception;
 
