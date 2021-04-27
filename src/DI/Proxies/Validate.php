@@ -4,7 +4,7 @@ namespace Spl\DI\Proxies;
 
 use Spl\DI\Proxy;
 
-class DB extends Proxy
+class Validate extends Proxy
 {
     /**
      * Get the registered name of the component.
@@ -13,6 +13,6 @@ class DB extends Proxy
      */
     protected static function getProxyAccessor()
     {
-        return 'database';
+        return 'validator';
     }
 }

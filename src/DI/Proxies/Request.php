@@ -4,7 +4,7 @@ namespace Spl\DI\Proxies;
 
 use Spl\DI\Proxy;
 
-class App extends Proxy
+class Request extends Proxy
 {
     /**
      * Get the registered name of the component.
@@ -13,6 +13,6 @@ class App extends Proxy
      */
     protected static function getProxyAccessor()
     {
-        return 'app';
+        return 'request';
     }
 }

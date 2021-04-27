@@ -4,7 +4,7 @@ namespace Spl\DI\Proxies;
 
 use Spl\DI\Proxy;
 
-class Lang extends Proxy
+class Cache extends Proxy
 {
     /**
      * Get the registered name of the component.
@@ -13,6 +13,6 @@ class Lang extends Proxy
      */
     protected static function getProxyAccessor()
     {
-        return 'translator';
+        return 'cache';
     }
 }

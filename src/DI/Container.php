@@ -35,7 +35,7 @@ class Container implements ContainerInterface
 
     public function __get($service) 
     {
-        if ($this->get($service)) {
+        if ($this->has($service)) {
             return $this->get($service);
         }
     }

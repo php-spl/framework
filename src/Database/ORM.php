@@ -58,7 +58,7 @@ class ORM
         }
     }
 
-    public function getTableFromChildModelPlural()
+    protected function getTableFromChildModelPlural()
     {
         $model = str_replace('Model', '', static::class);
         return strtolower(array_pop(explode('\\', $model))) . 's';
@@ -92,7 +92,6 @@ class ORM
 
     public function action($action, $table, $where, $options = null)
     {
-
         if(isset($action) && isset($table)) {
             $this->_sql = trim("{$action} FROM {$table} {$where} {$options}");
                     
@@ -102,7 +101,6 @@ class ORM
         }
 
         return $this;
-       
     }
 
     public function select($fields = '*')

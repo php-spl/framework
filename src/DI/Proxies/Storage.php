@@ -4,7 +4,7 @@ namespace Spl\DI\Proxies;
 
 use Spl\DI\Proxy;
 
-class Session extends Proxy
+class Storage extends Proxy
 {
     /**
      * Get the registered name of the component.

@@ -2,7 +2,7 @@
 
 namespace Spl\Error;
 
-use Psr\Error\InvalidArgumentException;
+use InvalidArgumentException;
 use Spl\Error\Traits;
 
 class Logger implements Interfaces\Logger
