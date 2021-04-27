@@ -126,11 +126,19 @@ class Server
     }
 
     /**
-     *  Is the script queried through a secure HTTP protocol
+     *  Return current url
      */
-    public function https()
+    public function current()
     {
-        return $_SERVER['HTTPS'];
+        return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    }
+    
+    /**
+     *  Return root url
+     */
+    public function url($path = null)
+    {
+        return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" . $path;
     }    
 
     /**

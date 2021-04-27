@@ -14,6 +14,8 @@ class ORM
     private const ACTION_SELECT = 'SELECT ';
     private const ACTION_DELETE = 'DELETE ';
 
+    public $pdo;
+
     protected $fillable = [];
     protected $fields = [];
     protected $prefix = null;
@@ -25,8 +27,7 @@ class ORM
             $_username,
             $_password;
 
-    private $_pdo,
-            $_sql,
+    private $_sql,
             $_query,
             $_where,
             $_results,
@@ -48,8 +49,8 @@ class ORM
         }
 
         try {
-            $this->_pdo = new PDO("{$this->_driver}:host={$this->_host};dbname={$this->_dbname}", $this->_username, $this->_password);
-            $this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+            $this->pdo = new PDO("{$this->_driver}:host={$this->_host};dbname={$this->_dbname}", $this->_username, $this->_password);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
             if(!isset($this->table)) {
                 $this->table = $this->getTableFromChildModelPlural();
             }
@@ -68,7 +69,7 @@ class ORM
     {
         $this->_error = false;
 
-        if($this->_query = $this->_pdo->prepare($sql)) {
+        if($this->_query = $this->pdo->prepare($sql)) {
             $parameter = 1;
             if(count($values)) {
                 foreach($values as $value) {
@@ -188,7 +189,7 @@ class ORM
             $sql = self::ACTION_INSERT . $this->table . ' (`' . implode('`, `', $keys) . '`) ' . "VALUES ($values)";
 
             if(!$this->query($sql, $fields)->error()) {
-                return $this->_pdo->lastInsertId();
+                return $this->pdo->lastInsertId();
             }
         }
 

@@ -15,4 +15,5 @@ class App extends Proxy
     {
         return 'app';
     }
+
 }

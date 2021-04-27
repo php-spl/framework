@@ -9,7 +9,13 @@ class Alias
      *
      * @var array
      */
-    protected $aliases;
+    protected $aliases = [
+        'App' => 'Spl\DI\Proxies\App',
+        'DB' => 'Spl\DI\Proxies\DB',
+        'Request' => 'Spl\DI\Proxies\Request',
+        'Response' => 'Spl\DI\Proxies\Response',
+        'Router' => 'Spl\DI\Proxies\Router'
+    ];
 
     /**
      * Indicates if a loader has been registered.

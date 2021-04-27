@@ -92,6 +92,26 @@ class Request
         );
     }
 
+    public function server()
+    {
+        return $this->server;
+    }
+
+    public function session()
+    {
+        return $this->session;
+    }
+
+    public function cookie()
+    {
+        return $this->cookie;
+    }
+
+    public function files()
+    {
+        return $this->files;
+    }
+
     public function method()
     {
         return $this->server->method();

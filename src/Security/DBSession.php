@@ -2,7 +2,7 @@
 
 namespace Spl\Security;
 
-class Session
+class DBSession
 {
     /**
      * @var \PDO

@@ -1,7 +1,181 @@
 <?php
 
+use Spl\DI\Proxy;
 use Spl\Types\Arr;
 use Spl\Types\Str;
+
+if (! function_exists('app')) {
+    // App
+    function app($service = null) {
+        $app = Proxy::getProxyApplication();
+        if($service) {
+            if($app->has($service)) {
+                return $app->get($service);
+            } else {
+                return false;
+            }
+        }
+        return $app;
+   }
+}
+
+if (! function_exists('config')) {
+    // Config
+    function config($path) {
+        if($path) {
+            return app('config')->get($path);
+        }
+    
+    }
+}
+
+if (! function_exists('session')) {
+    // Session
+    function session($name = null) {
+        if($name) {
+          if(app('session')->has($name)) {
+           return app('session')->get($name);
+          } else {
+            return false;
+          }
+        }
+       return app('session');
+    }
+}
+
+if (! function_exists('env')) {
+   
+    function env($key, $default = null) {
+
+        $data = $_ENV;
+        $segments = explode('_', $key);
+        
+        foreach($segments as $segment) {
+          if(isset($data[$segment])) {
+            $data = $data[$segment];
+          } else {
+            $data = $default;
+            break;
+          }
+        }
+        
+        return $data;
+    }
+}
+
+if (! function_exists('auth')) {
+    // Auth
+    function auth($guard = null) {
+        return app('auth');
+    } 
+}
+
+if (! function_exists('dump')) {
+
+    function dump() {
+        return var_dump(func_get_args());
+    }  
+}
+
+if (! function_exists('url')) {
+
+    function url($path = '') {
+        echo request()->url($path);
+    }
+}
+
+if (! function_exists('dd')) {
+
+    function dd() {
+        return die(func_get_args());
+    } 
+}
+
+if (! function_exists('halt')) {
+
+    function halt() {
+        return var_dump(func_get_args());
+        exit();
+    } 
+}
+
+if (! function_exists('router')) {
+    // Router
+    function router() {
+        return app('router');
+    }
+}
+
+if (! function_exists('e')) {
+
+    function e($string, $raw = false) {
+        if(!$raw) {
+          echo htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+        } else {
+          echo $string;
+        }
+       
+    }
+}
+
+if (! function_exists('__')) {
+    // Translator
+    function __($string, $replace = [], $locale = false) {
+        if($locale) {
+          app('translator')->forceLanguage($locale);
+        }
+        echo app('translator')->get($string, $replace);
+    }
+}
+
+if (! function_exists('route')) {
+
+    function route($name, $params = []) {
+        echo router()->link($name, $params);
+    }
+}
+
+if (! function_exists('view')) {
+    // View
+    function view($path, $data = []) {
+        return app('view')->render($path, $data);
+    }
+}
+
+if (! function_exists('token')) {
+    // Token
+    function token() {
+        if(app('token')) {
+          app('token')->create();
+          echo app('token')->csrf();
+        }
+      
+    }
+}
+
+if (! function_exists('validate')) {
+    // Validator
+    function validate($rules) {
+        return app('validator')->validate($rules);
+    }
+}
+
+if (! function_exists('request')) {
+    // Request
+    function request($key = false) {
+        if(!$key) {
+         return app('request');
+        }
+        return app('request')->get($key);
+    }
+}
+
+if (! function_exists('response')) {
+    // Response
+    function response() {
+        return app('response');
+    }
+}
 
 if (! function_exists('data_fill')) {
     /**

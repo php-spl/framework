@@ -20,7 +20,7 @@ class Token extends Session
         return $this->put($this->name, base64_encode(openssl_random_pseudo_bytes(32)));
     }
 
-    public function valid($token){
+    public function validate($token){
         $name = $this->name;
         if ($this->has($name) && $token === $this->get($name))  {
             $this->delete($name);
