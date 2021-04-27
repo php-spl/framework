@@ -2,13 +2,17 @@
 
 namespace Spl\Filesystem;
 
-class Upload {
+use Exception;
+use finfo;
+
+class Upload 
+{
 
 
 	/**
 	 * Default directory persmissions (destination dir)
 	 */
-	protected $default_permissions = 0750;
+	protected $defaultPermissions = 0750;
 
 
 	/**
@@ -16,7 +20,7 @@ class Upload {
 	 *
 	 * @var array
 	 */
-	protected $file_post = array();
+	protected $filePost = array();
 
 
 	/**
@@ -48,7 +52,7 @@ class Upload {
 	 *
 	 * @var int
 	 */
-	protected $max_file_size;
+	protected $maxFileSize;
 
 
 	/**
@@ -64,7 +68,7 @@ class Upload {
 	 *
 	 * @var object
 	 */
-	protected $external_callback_object;
+	protected $externalCallbackObject;
 
 
 	/**
@@ -72,7 +76,7 @@ class Upload {
 	 *
 	 * @var array
 	 */
-	protected $external_callback_methods = array();
+	protected $externalCallbackMethods = array();
 
 
 	/**
@@ -80,7 +84,7 @@ class Upload {
 	 *
 	 * @var string
 	 */
-	protected $tmp_name;
+	protected $tmpName;
 
 
 	/**
@@ -88,7 +92,7 @@ class Upload {
 	 *
 	 * @var array
 	 */
-	protected $validation_errors = array();
+	protected $validationErrors = array();
 
 
 	/**
@@ -147,7 +151,7 @@ class Upload {
 		}
 
 		// set & create destination path
-		if (!$this->set_destination($destination)) {
+		if (!$this->setDestination($destination)) {
 
 			throw new Exception('Upload: Can\'t create destination. '.$this->root . $this->destination);
 
@@ -163,7 +167,7 @@ class Upload {
 	 *
 	 * @param string $filename
 	 */
-	public function set_filename($filename) {
+	public function setFilename($filename) {
 
 		$this->filename = $filename;
 
@@ -180,11 +184,11 @@ class Upload {
 
 		if( $filename ) {
 
-			$this->set_filename($filename);
+			$this->setFilename($filename);
 
 		}
 
-		$this->set_filename($filename);
+		$this->setFilename($filename);
 		
 		if ($this->check()) {
 
@@ -193,7 +197,7 @@ class Upload {
 		}
 
 		// return state data
-		return $this->get_state();
+		return $this->getState();
 
 	}
 
@@ -207,9 +211,9 @@ class Upload {
 	 */
 	public function save() {
 
-		$this->save_file();
+		$this->saveFile();
 
-		return $this->get_state();
+		return $this->getState();
 
 	}
 
@@ -227,10 +231,10 @@ class Upload {
 		$this->validate();
 
 		//add error messages
-		$this->file['errors'] = $this->get_errors();
+		$this->file['errors'] = $this->getErrors();
 
 		//change file validation status
-		$this->file['status'] = empty($this->validation_errors);
+		$this->file['status'] = empty($this->validationErrors);
 
 		return $this->file['status'];
 
@@ -242,7 +246,7 @@ class Upload {
 	 *
 	 * @return array
 	 */
-	public function get_state() {
+	public function getState() {
 
 		return $this->file;
 
@@ -252,11 +256,11 @@ class Upload {
 	/**
 	 * Save file on server
 	 */
-	protected function save_file() {
+	protected function saveFile() {
 
 		//create & set new filename
 		if(empty($this->filename)){
-			$this->create_new_filename();
+			$this->createNewFilename();
 		}
 
 		//set filename
@@ -266,7 +270,7 @@ class Upload {
 		$this->file['full_path'] = $this->root . $this->destination . $this->filename;
         	$this->file['path'] = $this->destination . $this->filename;
 
-		$status = move_uploaded_file($this->tmp_name, $this->file['full_path']);
+		$status = move_uploaded_file($this->tmpName, $this->file['full_path']);
 
 		//checks whether upload successful
 		if (!$status) {
@@ -282,19 +286,19 @@ class Upload {
 	/**
 	 * Set data about file
 	 */
-	protected function set_file_data() {
+	protected function setFileData() {
 
-		$file_size = $this->get_file_size();
+		$file_size = $this->getFileSize();
 
 		$this->file = array(
 			'status'				=> false,
 			'destination'			=> $this->destination,
 			'size_in_bytes'			=> $file_size,
-			'size_in_mb'			=> $this->bytes_to_mb($file_size),
-			'mime'					=> $this->get_file_mime(),
-			'original_filename'		=> $this->file_post['name'],
-			'tmp_name'				=> $this->file_post['tmp_name'],
-			'post_data'				=> $this->file_post,
+			'size_in_mb'			=> $this->bytesToMb($file_size),
+			'mime'					=> $this->getFileMime(),
+			'original_filename'		=> $this->filePost['name'],
+			'tmp_name'				=> $this->filePost['tmp_name'],
+			'post_data'				=> $this->filePost,
 		);
 
 	}
@@ -304,9 +308,9 @@ class Upload {
 	 *
 	 * @param string $message
 	 */
-	public function set_error($message) {
+	public function setError($message) {
 
-		$this->validation_errors[] = $message;
+		$this->validationErrors[] = $message;
 
 	}
 
@@ -316,9 +320,9 @@ class Upload {
 	 *
 	 * @return array
 	 */
-	public function get_errors() {
+	public function getErrors() {
 
-		return $this->validation_errors;
+		return $this->validationErrors;
 
 	}
 
@@ -343,8 +347,8 @@ class Upload {
 
 		}
 
-		$this->external_callback_object	 = $instance_of_callback_object;
-		$this->external_callback_methods = $callback_methods;
+		$this->externalCallbackObject	 = $instance_of_callback_object;
+		$this->externalCallbackMethods = $callback_methods;
 
 	}
 
@@ -355,18 +359,18 @@ class Upload {
 	protected function validate() {
 
 		//get curent errors
-		$errors = $this->get_errors();
+		$errors = $this->getErrors();
 
 		if (empty($errors)) {
 
 			//set data about current file
-			$this->set_file_data();
+			$this->setFileData();
 
 			//execute internal callbacks
-			$this->execute_callbacks($this->callbacks, $this);
+			$this->executeCallbacks($this->callbacks, $this);
 
 			//execute external callbacks
-			$this->execute_callbacks($this->external_callback_methods, $this->external_callback_object);
+			$this->executeCallbacks($this->externalCallbackMethods, $this->externalCallbackObject);
 
 		}
 
@@ -376,7 +380,7 @@ class Upload {
 	/**
 	 * Execute callbacks
 	 */
-	protected function execute_callbacks($callbacks, $object) {
+	protected function executeCallbacks($callbacks, $object) {
 
 		foreach($callbacks as $method) {
 
@@ -392,13 +396,13 @@ class Upload {
 	 *
 	 * @param object $object
 	 */
-	protected function check_mime_type($object) {
+	protected function checkMimeType($object) {
 
 		if (!empty($object->mimes)) {
 
 			if (!in_array($object->file['mime'], $object->mimes)) {
 
-				$object->set_error('Mime type not allowed.');
+				$object->setError('Mime type not allowed.');
 
 			}
 
@@ -412,7 +416,7 @@ class Upload {
 	 *
 	 * @param array $mimes
 	 */
-	public function set_allowed_mime_types($mimes) {
+	public function setAllowedMimeTypes($mimes) {
 
 		$this->mimes		= $mimes;
 
@@ -427,15 +431,15 @@ class Upload {
 	 *
 	 * @param object $object
 	 */
-	protected function check_file_size($object) {
+	protected function checkFileSize($object) {
 
-		if (!empty($object->max_file_size)) {
+		if (!empty($object->maxFileSize)) {
 
-			$file_size_in_mb = $this->bytes_to_mb($object->file['size_in_bytes']);
+			$file_size_in_mb = $this->bytesToMb($object->file['size_in_bytes']);
 
-			if ($object->max_file_size <= $file_size_in_mb) {
+			if ($object->maxFileSize <= $file_size_in_mb) {
 
-				$object->set_error('File is too big.');
+				$object->setError('File is too big.');
 
 			}
 
@@ -449,9 +453,9 @@ class Upload {
 	 *
 	 * @param int $size
 	 */
-	public function set_max_file_size($size) {
+	public function setMaxFileSize($size) {
 
-		$this->max_file_size	= $size;
+		$this->maxFileSize	= $size;
 
 		//if max file size is set -> set callback
 		$this->callbacks[]	= 'check_file_size';
@@ -466,7 +470,7 @@ class Upload {
 	 */
 	public function file($file) {
 
-		$this->set_file_array($file);
+		$this->setFileArray($file);
 
 	}
 
@@ -476,21 +480,21 @@ class Upload {
 	 *
 	 * @param array $file
 	 */
-	protected function set_file_array($file) {
+	protected function setFileArray($file) {
 
 		//checks whether file array is valid
-		if (!$this->check_file_array($file)) {
+		if (!$this->checkFileArray($file)) {
 
 			//file not selected or some bigger problems (broken files array)
-			$this->set_error('Please select file.');
+			$this->setError('Please select file.');
 
 		}
 
 		//set file data
-		$this->file_post = $file;
+		$this->filePost = $file;
 
 		//set tmp path
-		$this->tmp_name  = $file['tmp_name'];
+		$this->tmpName  = $file['tmp_name'];
 
 	}
 
@@ -500,7 +504,7 @@ class Upload {
 	 *
 	 * @return bool
 	 */
-	protected function check_file_array($file) {
+	protected function checkFileArray($file) {
 
 		return isset($file['error'])
 			&& !empty($file['name'])
@@ -516,9 +520,9 @@ class Upload {
 	 *
 	 * @return string
 	 */
-	protected function get_file_mime() {
+	protected function getFileMime() {
 
-		return $this->finfo->file($this->tmp_name, FILEINFO_MIME_TYPE);
+		return $this->finfo->file($this->tmpName, FILEINFO_MIME_TYPE);
 
 	}
 
@@ -528,9 +532,9 @@ class Upload {
 	 *
 	 * @return int
 	 */
-	protected function get_file_size() {
+	protected function getFileSize() {
 
-		return filesize($this->tmp_name);
+		return filesize($this->tmpName);
 
 	}
 
@@ -541,11 +545,11 @@ class Upload {
 	 * @param string $destination
 	 * @return bool
 	 */
-	protected function set_destination($destination) {
+	protected function setDestination($destination) {
 
 		$this->destination = $destination . DIRECTORY_SEPARATOR;
 
-		return $this->destination_exist() ? TRUE : $this->create_destination();
+		return $this->destinationExist() ? TRUE : $this->createDestination();
 
 	}
 
@@ -555,7 +559,7 @@ class Upload {
 	 *
 	 * @return bool
 	 */
-	protected function destination_exist() {
+	protected function destinationExist() {
 
 		return is_writable($this->root . $this->destination);
 
@@ -568,9 +572,9 @@ class Upload {
 	 * @param string $dir
 	 * @return bool
 	 */
-	protected function create_destination() {
+	protected function createDestination() {
 
-		return mkdir($this->root . $this->destination, $this->default_permissions, true);
+		return mkdir($this->root . $this->destination, $this->defaultPermissions, true);
 
 	}
 
@@ -580,11 +584,10 @@ class Upload {
 	 *
 	 * @return string
 	 */
-	protected function create_new_filename() {
-
+	protected function createNewFilename() 
+	{
 		$filename = sha1(mt_rand(1, 9999) . $this->destination . uniqid()) . time();
-		$this->set_filename($filename);
-
+		$this->setFilename($filename);
 	}
 
 
@@ -594,10 +597,9 @@ class Upload {
 	 * @param int $bytes
 	 * @return int
 	 */
-	protected function bytes_to_mb($bytes) {
-
+	protected function bytesToMb($bytes) 
+	{
 		return round(($bytes / 1048576), 2);
-
 	}
 
 

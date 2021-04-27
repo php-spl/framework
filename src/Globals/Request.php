@@ -3,22 +3,47 @@
 namespace Spl\Globals;
 
 use Spl\Globals\Server;
+use Spl\Globals\Get;
+use Spl\Globals\Post;
+use Spl\Globals\File;
+use Spl\Globals\Session;
+use Spl\Globals\Cookie;
 
 class Request
 {
-    public static function has($type = 'post') {
+    protected $server;
+    protected $cookie;
+    protected $session;
+    protected $files;
+    protected $post;
+    protected $get;
+
+    public function __construct(Server $server, Session $session, Cookie $cookie, File $files, Post $post, Get $get)
+    {
+        $this->server = $server;
+        $this->session = $session;
+        $this->cookie = $cookie;
+        $this->files = $files;
+        $this->post = $post;
+        $this->get = $get;
+    }
+
+    public function exists($type = 'post', $name = null) {
         switch ($type) {
             case 'post':
-                return (!empty($_POST)) ? true : false;
+                return $this->post->exists($name);
                 break;
             case 'get':
-                return (!empty($_GET)) ? true : false;
+                return $this->get->exists($name);
                 break;
             case 'cookie':
-                return (!empty($_COOKIE)) ? true : false;
+                return $this->cookie->exists($name);
+                break;
+            case 'session':
+                return $this->session->exists($name);
                 break;
             case 'files':
-                return (!empty($_FILES)) ? true : false;
+                return $this->files->exists($name);
                 break;
             default:
                 return false;
@@ -26,43 +51,69 @@ class Request
         }
     }
 
-    public static function get($key, $info = null)
+    public function has($type, $name) 
     {
-        if (isset($_POST[$key])) {
-            return trim(filter_var($_POST[$key], FILTER_SANITIZE_STRING));
-        } elseif (isset($_GET[$key])) {
-            return trim(filter_var($_GET[$key], FILTER_SANITIZE_STRING));
-        } elseif (isset($_COOKIE[$key])) {
-            return trim(filter_var($_GET[$key], FILTER_SANITIZE_STRING));
-        } elseif (isset($_FILES[$key][$info])) {
-            return $_FILES[$key][$info];
+        return $this->exists($type, $name);
+    }
+
+    public function get($name, $info = null)
+    {
+        if ($this->post->has($name)) {
+            return $this->post->value($name);
+        } elseif ($this->get->has($name)) {
+            return $this->get->value($name);
+        } elseif ($this->cookie->has($name)) {
+            return $this->cookie->get($name);
+        } elseif ($this->files->has($name, $info)) {
+            return $this->files->get($name, $info);
         } else {
             return false;
         }
     }
 
-    public static function method()
+    public function input($item, $info = null)
     {
-        return Server::method();
+        return $this->get($item, $info);
     }
 
-    public static function time()
+    public function old($item, $info = null)
     {
-        return Server::time();
+        return $this->get($item, $info);
     }
 
-    public static function scheme()
+    public function all()
     {
-        return Server::scheme();
+        return array_merge(
+            $this->get->all(),
+            $this->post->all(),
+            $this->cookie->all(),
+            $this->session->all(),
+            $this->files->all()
+        );
     }
 
-    public static function query()
+    public function method()
     {
-        return Server::query();
+        return $this->server->method();
     }
 
-    public static function uri()
+    public function time()
     {
-        return Server::uri();
+        return $this->server->time();
+    }
+
+    public function scheme()
+    {
+        return $this->server->scheme();
+    }
+
+    public function query()
+    {
+        return $this->server->query();
+    }
+
+    public function uri()
+    {
+        return $this->server->uri();
     }
 }

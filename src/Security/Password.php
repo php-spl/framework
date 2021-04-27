@@ -4,12 +4,12 @@ namespace Spl\Security;
 
 class Password
 {
-    public static function hash($password, $algo = PASSWORD_DEFAULT): string
+    public function hash($password, $algo = PASSWORD_DEFAULT): string
     {
         return password_hash($password, $algo);
     }
 
-    public static function verify($password, $hash): bool
+    public function verify($password, $hash): bool
     {
         return password_verify($password, $hash)
     }

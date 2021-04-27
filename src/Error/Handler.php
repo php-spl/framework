@@ -2,7 +2,7 @@
 
 namespace Spl\Error;
 
-class ErrorHandler
+class Handler
 {
     protected $errors = [];
 

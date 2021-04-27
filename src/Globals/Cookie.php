@@ -4,38 +4,51 @@ namespace Spl\Globals;
 
 class Cookie
 {
-    static $expiry = (86400 * 1); // days
-    static $path = '/';
-    static $domain = false;
-    static $secure = false;
-    static $httpOnly = true;
+    public $expiry = (86400 * 1); // days
+    public $path = '/';
+    public $domain = false;
+    public $secure = false;
+    public $httpOnly = true;
 
     /*
      * Check if cookie exists by name
      */
-    public static function has($name)
+    public function exists($name = null)
     {
         return (isset($_COOKIE[$name])) ? true : false;
     }
 
     /*
+     * Check if cookie exists by name
+     */
+    public function has($name = null)
+    {
+        return $this->exists($name);
+    }
+
+    /*
      * Get cookie value by name
      */
-    public static function get($name)
+    public static function get($name = null)
     {
         return $_COOKIE[$name];
+    }
+
+    public function all()
+    {
+        return $_COOKIE;
     }
 
     /*
      * Set a cookie and exipiry
      */
-    public static function set($name, $value, $expiry = false)
+    public function set($name, $value, $expiry = false)
     {
         if($expiry) {
             self::$expiry = $expiry;
         }
 
-        if (setcookie($name, $value, time() + self::$expiry, self::$path, self::$domain, self::$secure, self::$httpOnly)) {
+        if (setcookie($name, $value, time() + $this->expiry, $this->path, $this->domain, $this->secure, $this->httpOnly)) {
             return true;
         }
         
@@ -45,9 +58,13 @@ class Cookie
     /*
      * Delete cookie by setting expiry to zero
      */
-    public static function delete($name)
+    public function delete($name)
     {
-        static::set($name, '', time() - 1);
+        if($this->has($name)) {
+            $this->set($name, '', time() - 1);
+            return false;
+        }
+        return false;
     }
 
 }

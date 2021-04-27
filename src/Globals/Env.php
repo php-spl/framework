@@ -4,7 +4,13 @@ namespace Spl\Globals;
 
 class Env 
 {
-    public static function get($path = null) {
+    public function set($name, $value)
+    {
+        $_ENV[$name] = $value;
+    }
+
+    public function get($path = null) 
+    {
         if ($path) {
             $config = $_ENV;
             $path = explode('.', $path);

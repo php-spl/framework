@@ -7,7 +7,7 @@ class Server
     /**
      * Returns the http connection (such as keep-alive)
      */
-    public static function connection()
+    public function connection()
     {
         return $_SERVER['HTTP_CONNECTION'];
     }
@@ -15,7 +15,7 @@ class Server
     /**
      * Returns the version of the Common Gateway Interface (CGI) the server is using
      */
-    public static function gateway()
+    public function gateway()
     {
         return $_SERVER['GATEWAY_INTERFACE'];
     }
@@ -23,7 +23,7 @@ class Server
     /**
      * Returns the IP address of the host server
      */
-    public static function ip()
+    public function ip()
     {
         return $_SERVER['SERVER_ADDR'];
     }
@@ -31,7 +31,7 @@ class Server
     /**
      * Returns the name of the host server
      */
-    public static function name()
+    public function name()
     {
         return $_SERVER['SERVER_NAME'];
     }
@@ -39,7 +39,7 @@ class Server
     /**
      * Returns the server identification string (such as Apache/2.2.24)
      */
-    public static function software()
+    public function software()
     {
         return $_SERVER['SERVER_SOFTWARE'];
     }
@@ -47,7 +47,7 @@ class Server
     /**
      * Returns the request scheme
      */
-    public static function scheme()
+    public function scheme()
     {
         return $_SERVER['REQUEST_SCHEME'];
     }
@@ -55,7 +55,7 @@ class Server
     /**
      * Returns the name and revision of the information protocol (such as HTTP/1.1)
      */
-    public static function protocal()
+    public function protocal()
     {
         return $_SERVER['SERVER_PROTOCOL'];
     }
@@ -63,7 +63,7 @@ class Server
     /**
      * Returns the request method used to access the page (such as POST)
      */
-    public static function method()
+    public function method()
     {
         return $_SERVER['REQUEST_METHOD'];
     }
@@ -71,7 +71,7 @@ class Server
     /**
      * Returns the timestamp of the start of the request (such as 1377687496)
      */
-    public static function time()
+    public function time()
     {
         return $_SERVER['REQUEST_TIME'];
     }
@@ -79,7 +79,7 @@ class Server
     /**
      * 	Returns the query string if the page is accessed via a query string
      */
-    public static function query()
+    public function query()
     {
         return $_SERVER['QUERY_STRING'];
     }
@@ -87,15 +87,16 @@ class Server
     /**
      *  Returns the browser user agent
      */
-    public static function agent()
+    public function agent()
     {
         return $_SERVER['HTTP_USER_AGENT'];
     }
     
+    
     /**
      *  Returns the Accept header from the current request
      */
-    public static function accept()
+    public function accept()
     {
         return $_SERVER['HTTP_ACCEPT'];
     }
@@ -103,7 +104,7 @@ class Server
     /**
      *  Returns the Accept_Charset header from the current request (such as utf-8,ISO-8859-1)
      */
-    public static function charset()
+    public function charset()
     {
         return $_SERVER['HTTP_ACCEPT_CHARSET'];
     }
@@ -111,7 +112,7 @@ class Server
     /**
      *  Returns the Host header from the current request
      */
-    public static function host()
+    public function host()
     {
         return $_SERVER['HTTP_HOST'];
     }
@@ -119,7 +120,7 @@ class Server
     /**
      *  Returns the complete URL of the current page (not reliable because not all user-agents support it)
      */
-    public static function referer()
+    public function referer()
     {
         return $_SERVER['HTTP_REFERER'];
     }
@@ -127,7 +128,7 @@ class Server
     /**
      *  Is the script queried through a secure HTTP protocol
      */
-    public static function https()
+    public function https()
     {
         return $_SERVER['HTTPS'];
     }    
@@ -136,7 +137,7 @@ class Server
      * ip: Returns the IP address from where the user is viewing the current page
      * host: Returns the Host name from where the user is viewing the current page
      */
-    public static function remote($server = 'ip')
+    public function remote($server = 'ip')
     {
         switch ($server) {
             case 'ip':
@@ -157,7 +158,7 @@ class Server
     /**
     *  Returns the value given to the SERVER_ADMIN directive in the web server configuration file (if your script runs on a virtual host, it will be the value defined for that virtual host)
     */
-    public static function admin()
+    public function admin()
     {
         return $_SERVER['SERVER_ADMIN'];
     }
@@ -165,7 +166,7 @@ class Server
     /**
     *  Returns the port on the server machine being used by the web server for communication (such as 80)
     */
-    public static function port()
+    public function port()
     {
         return $_SERVER['SERVER_PORT'];
     }
@@ -173,7 +174,7 @@ class Server
     /**
     *  Returns the server version and virtual host name which are added to server-generated pages
     */
-    public static function sig()
+    public function sig()
     {
         return $_SERVER['SERVER_SIGNATURE'];
     }
@@ -182,7 +183,7 @@ class Server
     *  script: Returns the path of the current script
     *  system: Returns the file system based path to the current script
     */
-    public static function path($server = 'root')
+    public function path($server = 'root')
     {
         switch ($server) {
             case 'file':
@@ -203,7 +204,7 @@ class Server
     /**
     *  Returns the URI of the current page
     */
-    public static function uri($server = 'request')
+    public function uri($server = 'request')
     {
         switch ($server) {
             case 'request':

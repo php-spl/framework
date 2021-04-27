@@ -5,7 +5,7 @@ namespace Spl\Security;
 class HMAC
 {
 	
-	public static function secret(int $length = 32, bool $outputAsBase64UrlEncodedData = true, bool $removePaddingInOutputData = true) 
+	public function secret(int $length = 32, bool $outputAsBase64UrlEncodedData = true, bool $removePaddingInOutputData = true) 
     {
 		
 		try {
@@ -30,11 +30,11 @@ class HMAC
 				
 				if ($outputAsBase64UrlEncodedData === true) {
 					
-					$base64UrlEncodedSecret = static::encode($generatedCryptographicallySecureString);
+					$base64UrlEncodedSecret = $this->encode($generatedCryptographicallySecureString);
 					
 					if ($removePaddingInOutputData === true) {
 						
-						$base64UrlEncodedPaddingRemovedSecret = static::filter($base64UrlEncodedSecret);
+						$base64UrlEncodedPaddingRemovedSecret = $this->filter($base64UrlEncodedSecret);
 						
 						return $base64UrlEncodedPaddingRemovedSecret;
 						
@@ -67,7 +67,7 @@ class HMAC
 		
 	}
 	
-	public static function hash(string $message, string $secretKey, string $algorithm = 'sha256', bool $outputAsBase64UrlEncodedData = true, bool $removePaddingInOutputData = true) 
+	public function hash(string $message, string $secretKey, string $algorithm = 'sha256', bool $outputAsBase64UrlEncodedData = true, bool $removePaddingInOutputData = true) 
     {
 		
 		try {
@@ -80,12 +80,12 @@ class HMAC
 					$binarySignature = hash_hmac($algorithm, $message, $secretKey, true);
 					
 					//Base64 URL Encoded Binary Signature
-					$base64UrlEncodedBinarySignature = static::encode($binarySignature);
+					$base64UrlEncodedBinarySignature = $this->encode($binarySignature);
 					
 					if ($removePaddingInOutputData === true) {
 						
 						//remove padding (=), from Base64 URL Encoded Binary Signature
-						$base64UrlEncodedPaddingRemovedBinarySignature = static::filter($base64UrlEncodedBinarySignature);
+						$base64UrlEncodedPaddingRemovedBinarySignature = $this->filter($base64UrlEncodedBinarySignature);
 						
 						return $base64UrlEncodedPaddingRemovedBinarySignature;
 						
@@ -117,7 +117,7 @@ class HMAC
 		
 	}
 	
-	public static function verify(string $systemGeneratedSignature, string $userSuppliedSignature) {
+	public function verify(string $systemGeneratedSignature, string $userSuppliedSignature) {
 		
 		try {
 			
@@ -139,19 +139,19 @@ class HMAC
 		
 	}
 	
-	public static function encode(string $string) {
+	public function encode(string $string) {
 		
 		return str_replace(array('+', '/'), array('-', '_'), base64_encode($string));
 		
 	}
 	
-	public static function decode(string $string) {
+	public function decode(string $string) {
 		
 		return base64_decode(str_replace(array('-', '_'), array('+', '/'), $string));
 		
 	}
 	
-	public static function filter(string $string) {
+	public function filter(string $string) {
 		
 		//remove padding (=), from Base64 URL Encoded Binary Signature
 		return str_replace("=", "", $string);

@@ -2,11 +2,12 @@
 
 namespace Spl\Security;
 
-use Spl\Database\Interfaces\ModelInterface;
-use Spl\Session\SessionInterface;
+use Spl\Database\Model;
+use Spl\Globals\Session;
 use Spl\Globals\Cookie;
 
-class Auth {
+class Auth 
+{
 
     public $name = 'user'; 
 
@@ -21,7 +22,7 @@ class Auth {
     protected $session;
     protected $cookie;
 
-    public function __construct(ModelInterface $user, SessionInterface $session, Cookie $cookie)
+    public function __construct(Model $user, Session $session, Cookie $cookie)
     {
         $this->user = $user;
         $this->session = $session;

@@ -4,39 +4,39 @@ namespace Spl\Security;
 
 class Hash
 {
-    public static $algo = 'sha256';
+    public $algo = 'sha256';
     
-    public static function crypt($string, $salt = '') 
+    public function crypt($string, $salt = '') 
     {
         return crypt($string . $salt, '$2y$10$' . $salt);
     }
 
-    public static function random($length = 32) 
+    public function random($length = 32) 
     {
         return strtr(substr(base64_encode(openssl_random_pseudo_bytes($length)),0,22), '+', '.');
     }
 
-    public static function make($string, $key = false, $random = false) 
+    public function make($string, $key = false, $random = false) 
     {
         if($key) {
-            return hash(self::$algo, $string . $key);
+            return hash($this->algo, $string . $key);
         }
 
         if($random) {
-            return hash(self::$algo, $string . self::random());
+            return hash($this->algo, $string . $this->random());
         }
         
-        return hash(self::$algo, $string);
+        return hash($this->algo, $string);
     }
 
-    public static function unique() 
+    public function unique() 
     {
-        return static::make(uniqid());
+        return $this->make(uniqid());
     }
 
-    public static function equals($hash, $sig)
+    public function equals($hash, $sig)
     {
-       return hash_equals(static::make($hash), $sig);
+       return hash_equals($this->make($hash), $sig);
     }
 
 }

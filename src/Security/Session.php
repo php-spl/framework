@@ -1,8 +1,8 @@
 <?php
 
-namespace Spl\Session;
+namespace Spl\Security;
 
-class PDOSession implements SessionInterface
+class Session
 {
     /**
      * @var \PDO

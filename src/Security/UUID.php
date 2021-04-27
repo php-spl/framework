@@ -33,7 +33,7 @@ class UUID
 	 * 
 	 * @param	string	$node
 	 */
-	public static function v1($node)
+	public function v1($node)
 	{
 		// nano second time (only micro second precision) since start of UTC
 		$time = microtime(true) * 10000000 + 0x01b21dd213814000;
@@ -84,7 +84,7 @@ class UUID
 	 * @param	uuid	$namespace
 	 * @param	string	$name
 	 */
-	public static function v3($namespace, $name)
+	public function v3($namespace, $name)
 	{
 		if(!self::valid($namespace)) return false;
 
@@ -131,7 +131,7 @@ class UUID
 	 * 
 	 * Version 4 UUIDs are pseudo-random.
 	 */
-	public static function v4() 
+	public function v4() 
 	{
 		return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
 
@@ -165,7 +165,7 @@ class UUID
 	 * @param	uuid	$namespace
 	 * @param	string	$name
 	 */
-	public static function v5($namespace, $name) 
+	public function v5($namespace, $name) 
 	{
 		if(!static::valid($namespace)) return false;
 
@@ -206,7 +206,7 @@ class UUID
 		);
 	}
 
-	public static function valid($uuid) {
+	public function valid($uuid) {
 		return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.
                       '[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i', $uuid) === 1;
 	}

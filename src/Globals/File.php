@@ -6,27 +6,49 @@ use Spl\Globals\Request;
 
 class File
 {
-    public static function has($path): bool
+    public function exists($path, $info = 'tmp_name'): bool
     {
-        return file_exists($path);
+        if(file_exists($path) || is_uploaded_file($_FILES[$path][$info])) {
+            return true;
+        }
+        return false;
     }
 
-    public static function inc($path)
+    public function has($path, $info = 'tmp_name'): bool
     {
-        include_once $path . '.php';
+        return $this->exists($path, $info);
     }
 
-    public static function req($path)
+    public function inc($path, $extension = '.php')
     {
-        require_once $path . '.php';
+        include_once $path . $extension;
     }
 
-    public static function get($filename)
+    public function req($path, $extension = '.php')
     {
-        return file_get_contents($filename);
+        require_once $path . $extension;
     }
 
-    public static function put($filename, $data, $flags = 0)
+    public function all()
+    {
+        return $_FILES;
+    }
+
+    public function get($name, $info = 'tmp_name')
+    {
+        if($this->exists($name)) {
+            if(file_get_contents($name)) {
+                return file_get_contents($name);
+            }
+
+            if(isset($_FILES[$name][$info])) {
+                return $_FILES[$name][$info];
+            }
+        }
+        return false;
+    }
+
+    public function put($filename, $data, $flags = 0)
     {
         return file_put_contents($filename, $data, $flags);
     }
@@ -37,15 +59,15 @@ class File
     * @param  string  $path
     * @return string
     */
-    public static function hash($path)
+    public function hash($path)
     {
-        if (static::has($path)) {
+        if ($this->has($path)) {
             return md5_file($path);
         }
         return false;
     }
 
-    public static function read($path, $filter = ['.','..','.gitignore'])
+    public function read($path, $filter = ['.','..','.gitignore'])
     {
         $files=[];
         $res= array_diff(scandir($path), $filter);
@@ -55,9 +77,9 @@ class File
         return $files;
     }
 
-    public static function delete($filename)
+    public function delete($filename)
     {
-        if(static::has($filename)){
+        if($this->has($filename)){
 
             unlink($filename);
 
@@ -67,7 +89,7 @@ class File
         return false;
     }
 
-    public static function move($filename, $destination)
+    public function move($filename, $destination)
     {
         if(move_uploaded_file($filename, $destination)) {
             return true;
@@ -76,7 +98,7 @@ class File
         return false;
     }
 
-    public static function create($dir, $permission = 0750)
+    public function create($dir, $permission = 0750)
     {
         if(mkdir($dir, $permission, true)) {
             return true;
@@ -85,22 +107,14 @@ class File
         return false;
     }
 
-    public static function remove($dir)
+    public function remove($dir)
     {
-
-        $files = static::read($dir);
+        $files = $this->read($dir);
     
         foreach ($files as $file) {
-          (is_dir("$dir/$file")) ? static::remove("$dir/$file") : self::delete("$dir/$file");
+          (is_dir("$dir/$file")) ? $this->remove("$dir/$file") : $this->delete("$dir/$file");
         }
         return rmdir($dir);
-    }
-
-    public static function upload($key, $info = null)
-    {
-        if(Request::has('files')) {
-            return Request::get($key, $info);
-        }
     }
 
     public static function download($file, $filename = null)

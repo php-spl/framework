@@ -8,7 +8,7 @@ class Session
     /**
      * starts a session
      */
-    public static function start()
+    public function start()
     {
         // if no session exist, start a new session
         if (session_id() == '') {
@@ -19,15 +19,23 @@ class Session
     /*
      * Check if session exists or not
      */
-    public static function has($key)
+    public function exists($key = null)
     {
         return (isset($_SESSION[$key])) ? true : false;
     }
 
     /*
+     * Check if session exists or not
+     */
+    public function has($key = null)
+    {
+        return $this->exists($key);
+    }
+
+    /*
      * Set a session by key and value
      */
-    public static function set($key, $value)
+    public function put($key, $value)
     {
         return $_SESSION[$key] = $value;
     }
@@ -36,7 +44,7 @@ class Session
      * Adds a value as a new array element to the key.
      * useful for collecting error messages etc
      */
-    public static function addKey($key, $name, $value)
+    public function addKey($key, $name, $value)
     {
         $_SESSION[$key][$name] = $value;
     }
@@ -44,15 +52,20 @@ class Session
     /*
      * Get a session value by key
      */
-    public static function get($key)
+    public function get($key = null)
     {
         return $_SESSION[$key];
+    }
+
+    public function all()
+    {
+        return $_SESSION;
     }
 
     /*
      * Get a sessions array value by key and value
      */
-    public static function getKey($key, $value)
+    public function getKey($key, $value)
     {
         return $_SESSION[$key][$value];
     }
@@ -60,7 +73,7 @@ class Session
     /*
      * Delete key value from session array
      */
-    public static function deleteKey($key, $value)
+    public function deleteKey($key, $value)
     {
         unset($_SESSION[$key][$value]);
     }
@@ -76,9 +89,9 @@ class Session
     /*
      * Delete session by key name
      */
-    public static function delete($key)
+    public function delete($key)
     {
-        if (static::has($key))
+        if ($this->has($key))
         {
             unset($_SESSION[$key]);
         }
@@ -87,7 +100,7 @@ class Session
     /**
      * deletes the session (= logs the user out)
      */
-    public static function destroy()
+    public function destroy()
     {
         session_destroy();
     }
@@ -95,11 +108,11 @@ class Session
     /*
      * Flash messages by deleting session after it is shown
      */
-    public static function flash($key, $string = null)
+    public function flash($key, $string = null)
     {
-        if (static::has($key)) {
-            $session = static::get($key);
-            static::delete($key);
+        if ($this->has($key)) {
+            $session = $this->get($key);
+            $this->delete($key);
             return $session;
         }
 
