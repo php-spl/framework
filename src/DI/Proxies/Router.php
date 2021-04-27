@@ -4,7 +4,7 @@ namespace Spl\DI\Proxies;
 
 use Spl\DI\Proxy;
 
-class Route extends Proxy
+class Router extends Proxy
 {
     /**
      * Get the registered name of the component.

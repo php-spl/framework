@@ -11,6 +11,7 @@ class Alias
      */
     protected $aliases = [
         'App' => 'Spl\DI\Proxies\App',
+        'Config' => 'Spl\DI\Proxies\Config',
         'DB' => 'Spl\DI\Proxies\DB',
         'Request' => 'Spl\DI\Proxies\Request',
         'Response' => 'Spl\DI\Proxies\Response',
