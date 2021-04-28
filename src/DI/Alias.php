@@ -9,14 +9,7 @@ class Alias
      *
      * @var array
      */
-    protected $aliases = [
-        'App' => 'Spl\DI\Proxies\App',
-        'Config' => 'Spl\DI\Proxies\Config',
-        'DB' => 'Spl\DI\Proxies\DB',
-        'Request' => 'Spl\DI\Proxies\Request',
-        'Response' => 'Spl\DI\Proxies\Response',
-        'Router' => 'Spl\DI\Proxies\Router'
-    ];
+    protected $aliases = [];
 
     /**
      * Indicates if a loader has been registered.
@@ -53,6 +46,8 @@ class Alias
         if (is_null(static::$instance)) {
             return static::$instance = new static($aliases);
         }
+
+        static::$instance->setDefaultAliases();
 
         $aliases = array_merge(static::$instance->getAliases(), $aliases);
 
@@ -129,6 +124,24 @@ class Alias
     public function setAliases(array $aliases)
     {
         $this->aliases = $aliases;
+    }
+
+    /**
+     * Set the registered aliases.
+     *
+     * @param  array  $aliases
+     * @return void
+     */
+    public function setDefaultAliases()
+    {
+        $this->aliases = [
+            'App' => 'Spl\DI\Proxies\App',
+            'Config' => 'Spl\DI\Proxies\Config',
+            'DB' => 'Spl\DI\Proxies\DB',
+            'Request' => 'Spl\DI\Proxies\Request',
+            'Response' => 'Spl\DI\Proxies\Response',
+            'Router' => 'Spl\DI\Proxies\Router'
+        ];
     }
 
     /**
