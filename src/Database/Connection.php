@@ -4,11 +4,10 @@ namespace Spl\Database;
 
 use PDO;
 use PDOException;
+use Spl\DI\Singleton;
 
-class Connection
+class Connection extends Singleton
 {
-    protected static $factory = null;
-
     protected $connection = [
         'host' => '127.0.0.1',
         'driver' => 'mysql',
@@ -28,15 +27,6 @@ class Connection
     public $password;
     public $charset;
     public $collation;
-
-    public static function factory($connection = array())
-    {
-        if (!isset(self::$factory)) {
-            self::$factory = new Connection($connection);
-        }
-
-        return self::$factory;
-    }
 
     public function __construct($connection = array())
     {

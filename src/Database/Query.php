@@ -8,7 +8,7 @@ use PDOException;
 
 use Spl\Database\Connection;
 
-class QueryBuilder
+class Query
 {  
     // actions
     const ACTION_INSERT = "INSERT";

@@ -10,11 +10,11 @@ abstract class Singleton
      */
     protected static $instance;
 
-    public static function singleton()
+    public static function singleton(...$args)
     {
         if (!isset(self::$instance[static::class])) {
             $class = static::class;
-            self::$instance[static::class] = new $class();
+            self::$instance[static::class] = new $class(...$args);
         }
 
         return self::$instance[static::class];

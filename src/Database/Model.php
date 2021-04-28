@@ -3,21 +3,20 @@
 namespace Spl\Database;
 
 use Spl\Database\Connection;
-use Spl\Database\QueryBuilder;
-use Spl\Database\Interfaces\ModelInterface;
+use Spl\Database\Query;
 
-class Model extends QueryBuilder implements ModelInterface
+class Model extends Query
 {
-    protected static $factory = null;
+    protected static $instance = null;
 
-    public static function factory()
+    public static function singleton()
     {
-        if (!isset(self::$factory[static::class])) {
+        if (!isset(self::$instance[static::class])) {
             $model = static::class;
-            self::$factory[static::class] = new $model(Connection::factory());
+            self::$instance[static::class] = new $model(Connection::singleton());
         }
 
-        return self::$factory[static::class];
+        return self::$instance[static::class];
     }
 
     public function __construct(Connection $db)
