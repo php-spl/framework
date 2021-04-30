@@ -14,6 +14,10 @@ class Query
     const ACTION_SELECT = "SElECT";
     
     protected $pdo;
+    protected $mode = PDO::FETCH_OBJ;
+    protected $results;
+    protected $count = 0;
+    protected $error = false;
 
     protected $inputParams = [];
     protected $fieldsFromInput = [];
@@ -44,15 +48,15 @@ class Query
     public function __construct(\PDO $pdo = null)
     {
         $this->pdo = $pdo;
-
-        if(!isset($this->table)) {
+        
+        if(empty($this->table)) {
             $this->table = $this->getChildModel();
         }
     }
 
     protected function getChildModel()
     {
-        $model = str_replace('Model', '', static::class);
+        $model = str_replace('Model', '', get_called_class());
         return strtolower(array_pop(explode('\\', $model))) . 's';
     }
 
@@ -167,6 +171,65 @@ class Query
         }
 
         return $this;
+    }
+
+    public function get(array $inputParams = null) 
+    {
+        $pdo = $this->execute($inputParams);
+
+        if ($pdo->rowCount() > 0) {
+            $this->results = $pdo->fetchAll($this->mode);
+            $this->count = $pdo->rowCount();
+            return $this;
+        } else {
+            return false;
+        }
+    }
+
+    public function results()
+    {
+        return $this->results;
+    }
+
+    public function first()
+    {
+        if($this->count()) {
+            return $this->results()[0];
+        }
+        return false;
+    }
+
+    public function error()
+    {
+        return $this->error;
+    }
+
+    public function count()
+    {
+        return $this->count;
+    }
+
+    public function exists()
+    {
+        if($this->get()) {
+            return true;
+        }
+        return false;
+    }
+
+    public function find($id, $table = '', $field = 'id')
+    {
+        if(empty($table)) {
+            $table = $this->table;
+        }
+
+        $pdo = $this->select()->table($table)->where($field, '=', $id)->get();
+        
+        if($pdo) {
+            return $pdo->results();
+        }
+
+        return false;
     }
 
     protected function buildSelectQueryString(): string
@@ -470,7 +533,7 @@ class Query
             $this->action === self::ACTION_UPDATE ||
             $this->action === self::ACTION_DELETE
         ) {
-            return $success;
+            return $this->error = $success;
         }
 
         if ($this->action === self::ACTION_INSERT) {

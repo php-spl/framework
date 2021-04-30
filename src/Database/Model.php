@@ -6,7 +6,7 @@ use PDO;
 use Spl\Database\Connection;
 use Spl\Database\Query;
 
-class Model extends Query
+abstract class Model extends Query
 {
     protected static $instance = null;
 
@@ -14,7 +14,7 @@ class Model extends Query
     {
         if (!isset(self::$instance[static::class])) {
             $model = static::class;
-            self::$instance[static::class] = new $model(Connection::singleton());
+            self::$instance[static::class] = new $model(Connection::singleton()->pdo);
         }
 
         return self::$instance[static::class];
