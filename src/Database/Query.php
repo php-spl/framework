@@ -2,29 +2,59 @@
 
 namespace Spl\Database;
 
-use Spl\Database\Connection;
+use PDO;
 
 class Query
 {
-    public function __construct(\PDO $pdo = null)
-    {
-        $this->pdo = $pdo;
-    }
-
     // actions
-
     const ACTION_INSERT = "INSERT";
     const ACTION_INSERT_REPLACE = "INSERT OR REPLACE";
     const ACTION_UPDATE = "UPDATE";
     const ACTION_DELETE = "DELETE";
     const ACTION_SELECT = "SElECT";
+    
+    protected $pdo;
+
+    protected $inputParams = [];
+    protected $fieldsFromInput = [];
+    protected $inputIsAssoc = true; 
 
     protected $action = "";
-
-    /**
-     * @var string[]
-     */
     protected $fields = [];
+    protected $table = "";
+
+    protected $join = [];
+    protected $lastJoinId = -1;
+    protected $onClauses = []; 
+
+    protected $where = [];
+    protected $having = [];
+
+    protected $orderBy = [];
+    protected $groupBy = [];
+
+    protected $limit = "";
+    protected $offset = "";
+
+    public function setPdo(\PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function __construct(\PDO $pdo = null)
+    {
+        $this->pdo = $pdo;
+
+        if(!isset($this->table)) {
+            $this->table = $this->getChildModel();
+        }
+    }
+
+    protected function getChildModel()
+    {
+        $model = str_replace('Model', '', static::class);
+        return strtolower(array_pop(explode('\\', $model))) . 's';
+    }
 
     /**
      * @param string|string[] $fields
@@ -161,31 +191,26 @@ class Query
     }
 
     // table
-
-    protected $table = "";
-
     public function table(string $tableName): self
     {
         $this->table = $tableName; // no trailing space here !
         return $this;
     }
+
     public function inTable(string $tableName): self
     {
         return $this->table($tableName);
     }
+
     public function fromTable(string $tableName): self
     {
         return $this->table($tableName);
     }
 
     // join
-
-    protected $join = [];
-    protected $lastJoinId = -1;
-    protected $onClauses = []; // on clauses by join id
+    // on clauses by join id
     // unlike where and having
     // on is an array or conditional arrays
-
     protected function buildJoinQueryString(): string
     {
         $str = "";
@@ -215,14 +240,17 @@ class Query
         $this->lastJoinId++;
         return $this;
     }
+
     public function leftJoin(string $tableName, string $alias = null): self
     {
         return $this->join($tableName, $alias, "LEFT");
     }
+
     public function rightJoin(string $tableName, string $alias = null): self
     {
         return $this->join($tableName, $alias, "RIGHT");
     }
+
     public function fullJoin(string $tableName, string $alias = null): self
     {
         return $this->join($tableName, $alias, "FULL");
@@ -239,15 +267,13 @@ class Query
 
         return $this->addConditionalClause($this->onClauses[$this->lastJoinId], $field, $sign, $value, $cond);
     }
+
     public function orOn($field, string $sign = null, $value = null): self
     {
         return $this->on($field, $sign, $value, "OR");
     }
 
     // where
-
-    protected $where = [];
-
     protected function buildWhereQueryString(): string
     {
         $where = $this->buildConditionalQueryString($this->where);
@@ -264,6 +290,7 @@ class Query
     {
         return $this->addConditionalClause($this->where, $field, $sign, $value, $cond);
     }
+
     public function orWhere($field, string $sign = null, $value = null)
     {
         return $this->where($field, $sign, $value, "OR");
@@ -273,14 +300,17 @@ class Query
     {
         return $this->where("$field IS NULL");
     }
+
     public function orWhereNull(string $field): self
     {
         return $this->orWhere("$field IS NULL");
     }
+
     public function whereNotNull(string $field): self
     {
         return $this->where("$field IS NOT NULL");
     }
+
     public function orWhereNotNull(string $field): self
     {
         return $this->orWhere("$field IS NOT NULL");
@@ -295,14 +325,17 @@ class Query
     {
         return $this->where("$field BETWEEN $min AND $max");
     }
+
     public function orWhereBetween(string $field, $min, $max): self
     {
         return $this->orWhere("$field BETWEEN $min AND $max");
     }
+
     public function whereNotBetween(string $field, $min, $max): self
     {
         return $this->where("$field NOT BETWEEN $min AND $max");
     }
+
     public function orWhereNotBetween(string $field, $min, $max): self
     {
         return $this->orWhere("$field NOT BETWEEN $min AND $max");
@@ -313,16 +346,19 @@ class Query
         $values = implode(", ", $values);
         return $this->where("$field IN ($values)");
     }
+
     public function orWhereIn(string $field, array $values): self
     {
         $values = implode(", ", $values);
         return $this->orWhere("$field IN ($values)");
     }
+
     public function whereNotIn(string $field, array $values): self
     {
         $values = implode(", ", $values);
         return $this->where("$field NOT IN ($values)");
     }
+
     public function orWhereNotIn(string $field, array $values): self
     {
         $values = implode(", ", $values);
@@ -330,9 +366,6 @@ class Query
     }
 
     // order by, group by, having
-
-    protected $orderBy = [];
-
     protected function buildOrderByQueryString(): string
     {
         if (empty($this->orderBy)) {
@@ -347,8 +380,6 @@ class Query
         $this->orderBy[] = "$field $direction";
         return $this;
     }
-
-    protected $groupBy = [];
 
     protected function buildGroupByQueryString(): string
     {
@@ -371,8 +402,6 @@ class Query
         return $this;
     }
 
-    protected $having = [];
-
     protected function buildHavingQueryString(): string
     {
         $having = $this->buildConditionalQueryString($this->having);
@@ -393,9 +422,6 @@ class Query
     }
 
     // limit offset
-
-    protected $limit = "";
-
     public function limit(int $limit, int $offset = null): self
     {
         $this->limit = "LIMIT $limit ";
@@ -405,8 +431,6 @@ class Query
         return $this;
     }
 
-    protected $offset = "";
-
     public function offset(int $offset): self
     {
         $this->offset = "OFFSET $offset ";
@@ -414,7 +438,6 @@ class Query
     }
 
     // non-query building methods
-
     public function prepare(): \PDOStatement
     {
         return $this->pdo->prepare($this->toString());
@@ -589,11 +612,7 @@ class Query
         }
         return $quoted;
     }
-
-    protected $inputParams = [];
-    protected $fieldsFromInput = [];
-    protected $inputIsAssoc = true; // set to true by default so that it generates named placeholder from fields name when the user has not supplied an inputParams
-
+    
     /**
      * @param array $inputParams
      * @see QueryBuilder::execute();
@@ -617,8 +636,7 @@ class Query
         if ($this->inputIsAssoc) {
             // save fields from input when data is assoc array, if we need them later
             $this->fieldsFromInput = $keys;
-        }
-        elseif (is_array($inputParams[0])) {
+        } elseif (is_array($inputParams[0])) {
             $keys = array_keys($inputParams[0]);
             if (is_string($keys[0])) {
                 $this->fieldsFromInput = $keys;
@@ -634,15 +652,5 @@ class Query
         }
 
         $this->inputParams = $formattedInput;
-    }
-
-    /**
-     * @var \PDO
-     */
-    protected $pdo;
-
-    public function setPdo(\PDO $pdo)
-    {
-        $this->pdo = $pdo;
     }
 }

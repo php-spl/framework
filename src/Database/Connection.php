@@ -51,6 +51,8 @@ class Connection extends Singleton
                 $this->password
             );
 
+            return $this->pdo;
+
         } catch (PDOException $error) {
             die($error->getMessage());
         }

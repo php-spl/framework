@@ -14,7 +14,7 @@ class Model extends Query
     {
         if (!isset(self::$instance[static::class])) {
             $model = static::class;
-            self::$instance[static::class] = new $model(Connection::singleton()->pdo);
+            self::$instance[static::class] = new $model(Connection::singleton());
         }
 
         return self::$instance[static::class];
