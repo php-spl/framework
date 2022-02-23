@@ -89,8 +89,6 @@ class Router
 
     public static function middleware($middleware)
     {
-        self::$middleware = new Middleware;
-
         if ($middleware) {
             self::$middleware->add($middleware);
         }
@@ -556,6 +554,7 @@ class Router
     public static function setup($url)
     {
         self::$URL = $url . '/';
+        self::$middleware = new Middleware;
 
         $request = '';
         
