@@ -343,3 +343,23 @@ if (! function_exists('value')) {
         return $value instanceof Closure ? $value(...$args) : $value;
     }
 }
+
+if ( ! function_exists('glob_r'))
+{
+    /**
+     * Recursive glob
+     * Does not support flag GLOB_BRACE !
+     *
+     * @param  mixed  $value
+     * @return mixed
+     */       
+   function glob_r($pattern, $flags = 0)
+   {
+     $files = glob($pattern, $flags);
+     foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir)
+     {
+       $files = array_merge($files, glob_r($dir.'/'.basename($pattern), $flags));
+     }
+     return $files;
+   }
+}
